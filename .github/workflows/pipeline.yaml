@@ -41,7 +41,7 @@ jobs:
       - run: |
           # trigger the tests here
           echo 'Running unit tests'
-          pip3 install pytest pytest-mock
+          pip3 install pytest pytest-mock aws_lambda_powertools aws_xray_sdk boto3
           python3 -m pytest tests/unit
 
   delete-feature:
