@@ -10,13 +10,9 @@ Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/devel
         Timeout: 5
         MemorySize: 128
         Runtime: python3.9
-
-# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
-Globals:
-  Function:
-    Tracing: Active
-  Api:
-    TracingEnabled: True
+        Tracing: Active
+    Api:
+        TracingEnabled: True
 
 Resources:
     HelloWorldFunction:
