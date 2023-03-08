@@ -75,7 +75,7 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       StageName: Prod
-      Name: "Rewards-Api"
+      Name: !Join [ '-', [ 'rewards-api' , Ref: "AWS::StackName" ]]
       Cors: "'*'"
       Auth:
         DefaultAuthorizer: MyCognitoAuthorizer

@@ -11,10 +11,12 @@ tracer = Tracer()
 logger = Logger()
 metrics = Metrics(namespace="Powertools")
 
+
 @app.get("/balance")
 @tracer.capture_method
 def balance():
-
+    event = app.current_event
+    context = app.context
     # adding custom metrics
     # See: https://awslabs.github.io/aws-lambda-powertools-python/latest/core/metrics/
     metrics.add_metric(name="BalanceInvocations", unit=MetricUnit.Count, value=1)
@@ -22,7 +24,8 @@ def balance():
     # structured log
     # See: https://awslabs.github.io/aws-lambda-powertools-python/latest/core/logger/
     logger.info("LedgerStore API - HTTP 200")
-    return {"balance": "420"}
+    sub = event["requestContext"]["authorizer"]["claims"]["sub"]
+    return {"balance": "420", "sub": sub}
 
 
 # Enrich logging with contextual information from Lambda

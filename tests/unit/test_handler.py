@@ -105,6 +105,11 @@ def apigw_event():
         "pathParameters": "",
         "queryStringParameters": "",
         "requestContext": {
+            "authorizer": {
+                "claims": {
+                    "sub": "eric"
+                }
+            },
             "accountId": "123456789012",
             "apiId": "1234567890",
             "domainName": "127.0.0.1:3000",
@@ -144,3 +149,4 @@ def test_lambda_handler(apigw_event):
     assert ret["statusCode"] == 200
     assert "balance" in ret["body"]
     assert data["balance"] == "420"
+    assert data["sub"] == "eric"
