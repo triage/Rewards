@@ -75,6 +75,7 @@ Resources:
     Type: AWS::Serverless::Api
     Properties:
       StageName: Prod
+      Name: "Rewards-Api"
       Cors: "'*'"
       Auth:
         DefaultAuthorizer: MyCognitoAuthorizer
