@@ -89,8 +89,8 @@ Outputs:
 #    Description: "The Cognito UserPool Client ID"
 #    Value: !Ref UserPoolClient
   RewardsApi:
-    Description: "API Gateway endpoint URL for Prod environment for Rewards Function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/rewards"
+    Description: "API Gateway endpoint URL for Prod stage for Rewards functions"
+    Value: !Sub "https://${RewardsApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/rewards/"
 
   BalanceFunction:
     Description: "Balance Lambda Function ARN"
