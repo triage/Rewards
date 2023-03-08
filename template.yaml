@@ -38,11 +38,12 @@ Resources:
         - x86_64
       Tracing: Active
       Events:
-        BalancePath:
-          Type: Api # More info about API Event Source: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-function-api.html
+        RewardsApi:
+          Type: Api
           Properties:
             Path: /balance
             Method: GET
+            RestApiId: !Ref RewardsApi  # Add this line
         # Powertools env vars: https://awslabs.github.io/aws-lambda-powertools-python/#environment-variables
       Environment:
         Variables:
