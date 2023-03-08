@@ -75,7 +75,7 @@
        ]
     },
     "multiValueQueryStringParameters":"",
-    "path":"/hello",
+    "path":"/balance",
     "pathParameters":"",
     "queryStringParameters":"",
     "requestContext":{
@@ -96,16 +96,16 @@
           "userAgent":"Custom User Agent String",
           "userArn":""
        },
-       "path":"/hello",
+       "path":"/balance",
        "protocol":"HTTP/1.1",
        "requestId":"a3590457-cac2-4f10-8fc9-e47114bf7c62",
        "requestTime":"02/Feb/2023:11:45:26 +0000",
        "requestTimeEpoch":1675338326,
        "resourceId":"123456",
-       "resourcePath":"/hello",
+       "resourcePath":"/balance",
        "stage":"Prod"
     },
-    "resource":"/hello",
+    "resource":"/balance",
     "stageVariables":"",
     "version":"1.0"
  }

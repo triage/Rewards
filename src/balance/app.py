@@ -11,17 +11,19 @@ tracer = Tracer()
 logger = Logger()
 metrics = Metrics(namespace="Powertools")
 
-@app.get("/hello")
+@app.get("/balance")
 @tracer.capture_method
-def hello():
+def balance():
+
     # adding custom metrics
     # See: https://awslabs.github.io/aws-lambda-powertools-python/latest/core/metrics/
-    metrics.add_metric(name="HelloWorldInvocations", unit=MetricUnit.Count, value=1)
+    metrics.add_metric(name="BalanceInvocations", unit=MetricUnit.Count, value=1)
 
     # structured log
     # See: https://awslabs.github.io/aws-lambda-powertools-python/latest/core/logger/
-    logger.info("Hello world API - HTTP 200")
-    return {"message": "hello world"}
+    logger.info("LedgerStore API - HTTP 200")
+    return {"balance": "420"}
+
 
 # Enrich logging with contextual information from Lambda
 @logger.inject_lambda_context(correlation_id_path=correlation_paths.API_GATEWAY_REST)
