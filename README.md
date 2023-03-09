@@ -18,10 +18,15 @@ An attempt to create a Rewards program on AWS SAM
 
 ## Preventing double-spends:
 1. [AWS Lambda Powertools for Python](https://awslabs.github.io/aws-lambda-powertools-python/2.9.1/utilities/idempotency/) - Idempotency control
-  1. Backed by dynamoDB, strongly-consistent reads
-2. QLDB
-  1. Transaction: get balance, fail if amount greater than balance, proceed if less than or equal to balance
-  2. QLDB will fail the second transaction in the case that the mutations from first invalides the select on the second
-  3. Second will retry and fail if balance is less than the amount
+- Backed by dynamoDB, strongly-consistent reads
+2. Perform QLDB Transaction:
+ - Get balance
+ - fail if amount greater than balance
+ - proceed if less than or equal to balance
+ - update balance
+ - insert transaction
+ 
+3. In case of simultaneous transcations: QLDB will fail the second transaction in the case that the mutations from first invalides the select on the second
+4. Second will retry and fail if balance is less than the amount
 
 <img width="1131" alt="Screenshot 2023-03-09 at 10 29 10 AM" src="https://user-images.githubusercontent.com/160455/224056206-af012f95-5876-4ba9-8d7c-7b6f1506aa39.png">
