@@ -29,5 +29,4 @@ An attempt to create a Rewards program on AWS SAM
 3. In case of simultaneous transcations: QLDB will fail the second transaction in the case that the mutations from first invalides the select on the second
 4. Second will retry and fail if balance is less than the amount
 
-<img width="1386" alt="Screenshot 2023-03-09 at 3 14 25 PM" src="https://user-images.githubusercontent.com/160455/224130792-e5ff0d8f-2bd4-445d-a133-8360c92c07cd.png">
-
+<img width="1401" alt="Screenshot 2023-03-09 at 3 15 32 PM" src="https://user-images.githubusercontent.com/160455/224130969-03866fc2-097a-457f-ba5c-8d70e5768857.png">
