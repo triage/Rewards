@@ -102,7 +102,7 @@ Resources:
     Type: "AWS::QLDB::Ledger"
     Properties:
       DeletionProtection: false
-      Name:  'rewards-ledger'
+      Name:  !Join [ '-', [ 'rewards-ledger' , Ref: "AWS::StackName" ]]
       PermissionsMode: "STANDARD"
 Outputs:
 #  CognitoID:
