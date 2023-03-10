@@ -1,3 +1,5 @@
+import os
+
 from aws_lambda_powertools.event_handler import APIGatewayRestResolver
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from aws_lambda_powertools.logging import correlation_paths
@@ -5,6 +7,8 @@ from aws_lambda_powertools import Logger
 from aws_lambda_powertools import Tracer
 from aws_lambda_powertools import Metrics
 from aws_lambda_powertools.metrics import MetricUnit
+from pyqldb.driver.qldb_driver import QldbDriver
+from pyqldb.config.retry_config import RetryConfig
 
 app = APIGatewayRestResolver()
 tracer = Tracer()
@@ -14,7 +18,7 @@ metrics = Metrics(namespace="Powertools")
 
 @app.get("/balance")
 @tracer.capture_method
-def balance():
+def get_balance():
     event = app.current_event
     context = app.context
     # adding custom metrics
@@ -25,7 +29,22 @@ def balance():
     # See: https://awslabs.github.io/aws-lambda-powertools-python/latest/core/logger/
     logger.info("LedgerStore API - HTTP 200")
     sub = event["requestContext"]["authorizer"]["claims"]["sub"]
-    return {"balance": "420", "sub": sub}
+
+    retry_config = RetryConfig(retry_limit=3)
+    qldb_driver = QldbDriver(ledger_name=os.environ.get("LEDGER_NAME"), retry_config=retry_config)
+
+    def read_documents(transaction_executor):
+        print("Querying the table")
+        cursor = transaction_executor.execute_statement("SELECT balance from balances WHERE sub = ?", sub)
+
+        if not cursor[0]:
+            raise "Balance not found for user ${sub}".format(sub=sub)
+
+        return cursor.fetchone()
+    # Query the table
+    balance = qldb_driver.execute_lambda(lambda executor: read_documents(executor))
+
+    return {"balance": balance, "sub": sub}
 
 
 # Enrich logging with contextual information from Lambda

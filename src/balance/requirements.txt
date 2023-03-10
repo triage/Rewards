@@ -2,3 +2,4 @@ requests
 aws_lambda_powertools
 aws_xray_sdk
 boto3
+pyqldb
