@@ -11,6 +11,10 @@ Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/devel
     MemorySize: 128
     Runtime: python3.9
     Tracing: Active
+    Environment:
+      Variables:
+        LEDGER_NAME: !Ref QldbLedger
+        AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
   Api:
     TracingEnabled: True
 
@@ -50,6 +54,18 @@ Resources:
           POWERTOOLS_SERVICE_NAME: PowertoolsBalance
           POWERTOOLS_METRICS_NAMESPACE: Powertools
           LOG_LEVEL: INFO
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - qldb:SendCommand
+              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/${QldbLedger}
+            - Effect: Allow
+              Action:
+                - qldb:PartiQLSelect
+              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/${QldbLedger}/*
       Tags:
         LambdaPowertools: python
   MyCognitoUserPool:
@@ -82,6 +98,12 @@ Resources:
         Authorizers:
           MyCognitoAuthorizer:
             UserPoolArn: !GetAtt MyCognitoUserPool.Arn
+  QldbLedger:  # Create Amazon QLDB ledger. Delete the ledger when the stack is deleted.
+    Type: "AWS::QLDB::Ledger"
+    Properties:
+      DeletionProtection: false
+      Name:  !Join [ '-', [ 'ledgerstore-' , Ref: "AWS::StackName" ]]
+      PermissionsMode: "STANDARD"
 Outputs:
 #  CognitoID:
 #    Description: "The Cognito UserPool ID"
@@ -92,7 +114,9 @@ Outputs:
   RewardsApi:
     Description: "API Gateway endpoint URL for Prod stage for Rewards functions"
     Value: !Sub "https://${RewardsApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/rewards/"
-
   BalanceFunction:
     Description: "Balance Lambda Function ARN"
     Value: !GetAtt BalanceFunction.Arn
+  RewardsLedger:
+    Description: "Amazon QLDB ledger name"
+    Value: !Ref QldbLedger
