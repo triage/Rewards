@@ -102,7 +102,7 @@ Resources:
     Type: "AWS::QLDB::Ledger"
     Properties:
       DeletionProtection: false
-      Name:  !Join [ '-', [ 'ledgerstore-' , Ref: "AWS::StackName" ]]
+      Name:  'rewards-ledger'
       PermissionsMode: "STANDARD"
 Outputs:
 #  CognitoID:
