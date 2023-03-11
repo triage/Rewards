@@ -13,7 +13,7 @@ Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/devel
     Tracing: Active
     Environment:
       Variables:
-        LEDGER_NAME: !Ref QldbLedger
+        LEDGER_NAME: !Join [ '-', [rewards-ledger, Ref: "AWS::StackName"]]
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
   Api:
     TracingEnabled: True
@@ -104,6 +104,13 @@ Resources:
       DeletionProtection: false
       Name:  !Join [ '-', [ 'rewards-ledger' , Ref: "AWS::StackName" ]]
       PermissionsMode: "STANDARD"
+
+  qldbIndex:
+    Type: Custom::qldbIndexes
+    DependsOn: qldbTable
+    Properties:
+      ServiceToken: !GetAtt CreateIndexLambdaFunction.Arn
+      Version: 1.0  #change this to force redeploy
 Outputs:
 #  CognitoID:
 #    Description: "The Cognito UserPool ID"

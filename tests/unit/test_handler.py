@@ -1,9 +1,11 @@
 import json
-from uuid import uuid4
+import os
+from pyqldb.driver.qldb_driver import QldbDriver
 
 import pytest
 
 from src.balance import app
+from unittest.mock import MagicMock, patch
 
 
 def lambda_context():
@@ -13,6 +15,8 @@ def lambda_context():
             self.memory_limit_in_mb = 128
             self.invoked_function_arn = "arn:aws:lambda:eu-west-1:809313241234:function:test-func"
             self.aws_request_id = "52fdfc07-2182-154f-163f-5f0f9a621d72"
+            # self.mock_db_connection = mocker.Mock(spec=QldbDriver)
+            os.environ["LEDGER_NAME"] = 'rewards-ledgerstore-test'
 
         def get_remaining_time_in_millis(self) -> int:
             return 1000
@@ -107,7 +111,7 @@ def apigw_event():
         "requestContext": {
             "authorizer": {
                 "claims": {
-                    "sub": "eric"
+                    "sub": "test-user-420"
                 }
             },
             "accountId": "123456789012",
@@ -143,10 +147,11 @@ def apigw_event():
 
 
 def test_lambda_handler(apigw_event):
+    # assert 1 == 1
     ret = app.lambda_handler(apigw_event, lambda_context())
     data = json.loads(ret["body"])
 
     assert ret["statusCode"] == 200
     assert "balance" in ret["body"]
-    assert data["balance"] == "420"
-    assert data["sub"] == "eric"
+    assert data["balance"] == 42000
+    assert data["sub"] == "test-user-420"

@@ -35,12 +35,16 @@ def get_balance():
 
     def read_documents(transaction_executor):
         print("Querying the table")
-        cursor = transaction_executor.execute_statement("SELECT balance from balances WHERE sub = ?", sub)
+        try:
+            cursor = transaction_executor.execute_statement("SELECT balance from balances WHERE sub = ?", sub)
+            first_record = next(cursor, None)
+            if first_record:
+                return first_record["balance"]
+            else:
+                return 0
+        except Exception as e:
+            raise e
 
-        if not cursor[0]:
-            raise "Balance not found for user ${sub}".format(sub=sub)
-
-        return cursor.fetchone()
     # Query the table
     balance = qldb_driver.execute_lambda(lambda executor: read_documents(executor))
 
