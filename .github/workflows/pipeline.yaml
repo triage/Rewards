@@ -41,7 +41,7 @@ jobs:
       - run: |
           # trigger the tests here
           echo 'Running unit tests'
-          pip3 install pytest pytest-mock aws_lambda_powertools aws_xray_sdk boto3 pyqldb
+          pip3 install pytest pytest-mock aws_lambda_powertools aws_xray_sdk boto3 pyqldb amazon.ion~=0.9.3 boto3~=1.24.93 botocore~=1.27.93 ionhash~=1.2.1
           python3 -m pytest tests/unit
 
   delete-feature:
