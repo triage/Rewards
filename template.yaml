@@ -144,9 +144,10 @@ Resources:
       Schema:
         - AttributeDataType: String
           Name: email
-          Required: true
+          Required: false
         - AttributeDataType: String
-          Name: custom:company
+          Name: company
+          Required: false
   MyCognitoMerchantPoolClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
