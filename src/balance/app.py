@@ -30,7 +30,6 @@ def get_balance():
     # See: https://awslabs.github.io/aws-lambda-powertools-python/latest/core/logger/
     logger.info("LedgerStore API - HTTP 200")
     sub = event["requestContext"]["authorizer"]["claims"]["sub"]
-
     retry_config = RetryConfig(retry_limit=3)
     qldb_driver = QldbDriver(ledger_name=os.environ.get("LEDGER_NAME"), retry_config=retry_config)
 

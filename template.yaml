@@ -32,6 +32,46 @@ Resources:
         AttributeName: expiration
         Enabled: true
       BillingMode: PAY_PER_REQUEST
+  RedeemFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
+    Properties:
+      Handler: app.lambda_handler
+      CodeUri: ./src/redeem
+      Description: Redeem function
+      Architectures:
+        - x86_64
+      Tracing: Active
+      Events:
+        MerchantApi:
+          Type: Api
+          Properties:
+            Path: /merchant/redeem
+            Method: POST
+            RestApiId: !Ref MerchantApi
+            RequestModel:
+              ValidateBody: true
+              Required: true
+              Model: RedeemRequestModel
+        # Powertools env vars: https://awslabs.github.io/aws-lambda-powertools-python/#environment-variables
+      Environment:
+        Variables:
+          POWERTOOLS_SERVICE_NAME: PowertoolsBalance
+          POWERTOOLS_METRICS_NAMESPACE: Powertools
+          LOG_LEVEL: INFO
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - qldb:SendCommand
+              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/rewards-ledger-${AWS::StackName}
+            - Effect: Allow
+              Action:
+                - qldb:PartiQLSelect
+              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/rewards-ledger-${AWS::StackName}
+      Tags:
+        LambdaPowertools: python
   BalanceFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
     Properties:
@@ -104,7 +144,10 @@ Resources:
       Schema:
         - AttributeDataType: String
           Name: email
-          Required: false
+          Required: true
+        - AttributeDataType: String
+          Name: custom:company
+          Required: true
   MyCognitoMerchantPoolClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
@@ -132,6 +175,19 @@ Resources:
         Authorizers:
           MyCognitoMerchantAuthorizer:
             UserPoolArn: !GetAtt MyCognitoMerchantPool.Arn
+      Models:
+        RedeemRequestModel:
+          type: object
+          user:
+            type: string
+          amount:
+            type: string
+          key:
+            type: string
+          merchant_description:
+            type: string
+          user_description:
+            type: string
 Outputs:
   RewardsUserApi:
     Description: "API Gateway endpoint URL for Prod stage for Rewards functions"
