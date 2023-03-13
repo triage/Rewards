@@ -59,6 +59,8 @@ Resources:
           POWERTOOLS_METRICS_NAMESPACE: Powertools
           LOG_LEVEL: INFO
       Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref IdempotencyTable
         - AWSLambdaBasicExecutionRole
         - Version: 2012-10-17
           Statement:

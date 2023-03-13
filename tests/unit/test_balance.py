@@ -13,6 +13,9 @@ def lambda_context():
             self.aws_request_id = "52fdfc07-2182-154f-163f-5f0f9a621d72"
             os.environ["LEDGER_NAME"] = 'rewards-ledgerstore-test'
 
+        def get_remaining_time_in_millis(self) -> int:
+             return 1000
+
     return LambdaContext()
 
 

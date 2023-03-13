@@ -16,6 +16,12 @@ tracer = Tracer()
 logger = Logger()
 metrics = Metrics(namespace="Powertools")
 
+from aws_lambda_powertools.utilities.idempotency import (
+    DynamoDBPersistenceLayer, idempotent
+)
+
+persistence_layer = DynamoDBPersistenceLayer(table_name="IdempotencyTable")
+
 
 @app.post("/merchant/redeem")
 @tracer.capture_method
@@ -54,15 +60,18 @@ def redeem():
         if user_balance < amount:
             raise Exception("Insufficient balance")
 
+        user_balance -= amount
+        merchant_balance += amount
+
         # update balances for each
         try:
-            statement = f"UPDATE balances set balance = {merchant_balance + amount}, \"key\"=\'{key}\' where sub=\'{merchant_sub}\'"
+            statement = f"UPDATE balances set balance = {merchant_balance}, \"key\"=\'{key}\' where sub=\'{merchant_sub}\'"
             transaction_executor.execute_statement(statement)
         except Exception as _:
             raise Exception("Unable to update merchant balance")
 
         try:
-            statement = f"UPDATE balances set balance = {user_balance - amount}, \"key\" = \'{key}\' where sub=\'{user_sub}\'"
+            statement = f"UPDATE balances set balance = {user_balance}, \"key\" = \'{key}\' where sub=\'{user_sub}\'"
             transaction_executor.execute_statement(statement)
         except Exception as _:
             raise Exception("Unable to update user balance")
@@ -108,5 +117,6 @@ def redeem():
 @tracer.capture_lambda_handler
 # ensures metrics are flushed upon request completion/failure and capturing ColdStart metric
 @metrics.log_metrics(capture_cold_start_metric=True)
+@idempotent(persistence_store=persistence_layer)
 def lambda_handler(event: dict, context: LambdaContext) -> dict:
     return app.resolve(event, context)
