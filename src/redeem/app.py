@@ -31,6 +31,7 @@ def redeem():
     user_sub, amount, key, merchant_description, user_description =\
         body["user_sub"], body["amount"], body["key"], body["merchant_description"], body["user_description"]
 
+    logger.info(f"key:{key}")
     retry_config = RetryConfig(retry_limit=3)
     qldb_driver = QldbDriver(ledger_name=os.environ.get("LEDGER_NAME"), retry_config=retry_config)
 
@@ -55,22 +56,24 @@ def redeem():
 
         # update balances for each
         try:
-            transaction_executor.execute_statement(f"UPDATE balances set balance = {merchant_balance} where sub=\'{merchant_sub}\'")
+            statement = f"UPDATE balances set balance = {merchant_balance + amount}, \"key\"=\'{key}\' where sub=\'{merchant_sub}\'"
+            transaction_executor.execute_statement(statement)
         except Exception as _:
             raise Exception("Unable to update merchant balance")
 
         try:
-            statement = f"UPDATE balances set balance = {user_balance - amount} where sub=\'{user_sub}\'"
+            statement = f"UPDATE balances set balance = {user_balance - amount}, \"key\" = \'{key}\' where sub=\'{user_sub}\'"
             transaction_executor.execute_statement(statement)
         except Exception as _:
             raise Exception("Unable to update user balance")
 
         # insert into a transaction for the user
         transaction_user = json.dumps({
-            'id': key,
-            'sub': user_sub,
-            'amount': amount,
-            'description': user_description
+            "id": "{key}-user".format(key=key),
+            "key": key,
+            "sub": user_sub,
+            "amount": amount,
+            "description": user_description
         }).replace("\"", "'")
         try:
             statement = f"INSERT into transactions VALUE {transaction_user}"
@@ -81,6 +84,7 @@ def redeem():
         # insert a transaction for the merchant
         transaction_merchant = json.dumps({
             "id": "{key}-merchant".format(key=key),
+            "key": key,
             "sub": merchant_sub,
             "amount": amount,
             "description": merchant_description

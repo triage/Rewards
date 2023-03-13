@@ -149,4 +149,3 @@ def test_redeem(apigw_event):
 
     assert ret["statusCode"] == 200
     assert data["key"] == transaction_key
-    
