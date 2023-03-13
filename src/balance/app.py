@@ -15,13 +15,12 @@ tracer = Tracer()
 logger = Logger()
 metrics = Metrics(namespace="Powertools")
 
-
 @app.get("/user/balance")
 @app.get("/merchant/balance")
 @tracer.capture_method
-def get_balance():
-    event = app.current_event
-    context = app.context
+def get_balance(qldb_driver: QldbDriver = None, event: APIGatewayRestResolver = None):
+    if not event:
+        event = app.current_event
     # adding custom metrics
     # See: https://awslabs.github.io/aws-lambda-powertools-python/latest/core/metrics/
     metrics.add_metric(name="BalanceInvocations", unit=MetricUnit.Count, value=1)
@@ -31,7 +30,8 @@ def get_balance():
     logger.info("LedgerStore API - HTTP 200")
     sub = event["requestContext"]["authorizer"]["claims"]["sub"]
     retry_config = RetryConfig(retry_limit=3)
-    qldb_driver = QldbDriver(ledger_name=os.environ.get("LEDGER_NAME"), retry_config=retry_config)
+    if not qldb_driver:
+        qldb_driver = QldbDriver(ledger_name=os.environ.get("LEDGER_NAME"), retry_config=retry_config)
 
     def read_documents(transaction_executor):
         print("Querying the table")

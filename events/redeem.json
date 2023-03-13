@@ -1,5 +1,5 @@
 {
-    "body":"",
+    "body": "{\"user_sub\": \"abc123\", \"amount\": 1200, \"merchant_description\": \"Order #123456\", \"user_description\": \"Company A\", \"key\": \"abc123\"}",
     "headers":{
        "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
        "Accept-Encoding":"gzip, deflate, br",
@@ -19,7 +19,7 @@
        "X-Forwarded-Port":"3000",
        "X-Forwarded-Proto":"http"
     },
-    "httpMethod":"GET",
+    "httpMethod":"POST",
     "isBase64Encoded": false,
     "multiValueHeaders":{
        "Accept":[
@@ -74,14 +74,14 @@
           "http"
        ]
     },
+    "path":"/merchant/redeem",
     "multiValueQueryStringParameters":"",
-    "path":"/user/balance",
     "pathParameters":"",
     "queryStringParameters":"",
     "requestContext":{
        "authorizer": {
           "claims": {
-             "sub": "eric",
+             "sub": "test-merchant-1",
              "custom:company": "Strategic Information Services"
           }
        },
@@ -89,7 +89,7 @@
        "apiId":"1234567890",
        "domainName":"127.0.0.1:3000",
        "extendedRequestId":"",
-       "httpMethod":"GET",
+       "httpMethod":"POST",
        "identity":{
           "accountId":"",
           "apiKey":"",
@@ -108,11 +108,9 @@
        "requestTime":"02/Feb/2023:11:45:26 +0000",
        "requestTimeEpoch":1675338326,
        "resourceId":"123456",
-       "resourcePath":"/balance",
+       "resourcePath":"/merchant/redeem",
        "stage":"Prod"
     },
-    "body": "{\"user_sub\": \"abc123\", \"amount\": 1200, \"merchant_description\": \"Order #123456\", \"user_description\": \"Company A\", \"key\": \"abc123\"}",
-    "resource":"/balance",
     "stageVariables":"",
     "version":"1.0"
  }

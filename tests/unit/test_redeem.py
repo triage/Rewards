@@ -1,12 +1,9 @@
 import json
 import os
-from pyqldb.driver.qldb_driver import QldbDriver
-
 import pytest
+from datetime import datetime
 
-from src.balance import app
-from unittest.mock import MagicMock, patch
-
+from src.redeem import app
 
 def lambda_context():
     class LambdaContext:
@@ -15,21 +12,21 @@ def lambda_context():
             self.memory_limit_in_mb = 128
             self.invoked_function_arn = "arn:aws:lambda:eu-west-1:809313241234:function:test-func"
             self.aws_request_id = "52fdfc07-2182-154f-163f-5f0f9a621d72"
-            # self.mock_db_connection = mocker.Mock(spec=QldbDriver)
             os.environ["LEDGER_NAME"] = 'rewards-ledgerstore-test'
-
-        def get_remaining_time_in_millis(self) -> int:
-            return 1000
 
     return LambdaContext()
 
+transaction_key = f"random-transaction-key{datetime.now().timestamp()}"
 
 @pytest.fixture()
 def apigw_event():
-    """ Generates API GW Event"""
 
     return {
-        "body": "",
+        "body": "{\"user_sub\": \"test-user-420\", "
+                "\"amount\": 1200, "
+                "\"merchant_description\": \"Order #123456\", "
+                "\"user_description\": \"Company A\", "
+                f"\"key\": \"{transaction_key}\"}}",
         "headers": {
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
             "Accept-Encoding": "gzip, deflate, br",
@@ -49,7 +46,7 @@ def apigw_event():
             "X-Forwarded-Port": "3000",
             "X-Forwarded-Proto": "http"
         },
-        "httpMethod": "GET",
+        "httpMethod": "POST",
         "isBase64Encoded": False,
         "multiValueHeaders": {
             "Accept": [
@@ -105,20 +102,20 @@ def apigw_event():
             ]
         },
         "multiValueQueryStringParameters": "",
-        "path": "/balance",
+        "path": "/merchant/redeem",
         "pathParameters": "",
         "queryStringParameters": "",
         "requestContext": {
             "authorizer": {
                 "claims": {
-                    "sub": "test-user-420"
+                    "sub": "test-merchant-1",
                 }
             },
             "accountId": "123456789012",
             "apiId": "1234567890",
             "domainName": "127.0.0.1:3000",
             "extendedRequestId": "",
-            "httpMethod": "GET",
+            "httpMethod": "POST",
             "identity": {
                 "accountId": "",
                 "apiKey": "",
@@ -131,27 +128,25 @@ def apigw_event():
                 "userAgent": "Custom User Agent String",
                 "userArn": ""
             },
-            "path": "/balance",
+            "path": "/merchant/redeem",
             "protocol": "HTTP/1.1",
             "requestId": "a3590457-cac2-4f10-8fc9-e47114bf7c62",
             "requestTime": "02/Feb/2023:11:45:26 +0000",
             "requestTimeEpoch": 1675338326,
             "resourceId": "123456",
-            "resourcePath": "/balance",
+            "resourcePath": "/merchant/redeem",
             "stage": "Prod"
         },
-        "resource": "/balance",
+        "resource": "/merchant/redeem",
         "stageVariables": "",
         "version": "1.0"
     }
 
 
-def test_lambda_handler(apigw_event):
-    assert 1 == 1
-    # ret = app.lambda_handler(apigw_event, lambda_context())
-    # data = json.loads(ret["body"])
-    #
-    # assert ret["statusCode"] == 200
-    # assert "balance" in ret["body"]
-    # assert data["balance"] == 42000
-    # assert data["sub"] == "test-user-420"
+def test_redeem(apigw_event):
+    ret = app.lambda_handler(apigw_event, lambda_context())
+    data = json.loads(ret["body"])
+
+    assert ret["statusCode"] == 200
+    assert data["key"] == transaction_key
+    

@@ -17,13 +17,10 @@ logger = Logger()
 metrics = Metrics(namespace="Powertools")
 
 
-@app.get("/merchant/redeem")
+@app.post("/merchant/redeem")
 @tracer.capture_method
-def get_balance():
+def redeem():
     event = app.current_event
-    context = app.context
-    # adding custom metrics
-    # See: https://awslabs.github.io/aws-lambda-powertools-python/latest/core/metrics/
     metrics.add_metric(name="RedeemInvocations", unit=MetricUnit.Count, value=1)
 
     # structured log
@@ -32,14 +29,14 @@ def get_balance():
     merchant_sub = event["requestContext"]["authorizer"]["claims"]["sub"]
     body = json.loads(event["body"])
     user_sub, amount, key, merchant_description, user_description =\
-        body["user"], body["amount"], body["key"], body["merchant_description"], body["user_description"]
+        body["user_sub"], body["amount"], body["key"], body["merchant_description"], body["user_description"]
 
     retry_config = RetryConfig(retry_limit=3)
     qldb_driver = QldbDriver(ledger_name=os.environ.get("LEDGER_NAME"), retry_config=retry_config)
 
-    def read_documents(transaction_executor):
+    def execute_transaction(transaction_executor):
 
-        def get_balanceForSub(sub):
+        def get_balance_for_sub(sub):
             try:
                 cursor = transaction_executor.execute_statement("SELECT balance from balances WHERE sub = ?", sub)
                 first_record = next(cursor, None)
@@ -50,37 +47,54 @@ def get_balance():
             except Exception as e:
                 raise e
 
-        merchant_balance = get_balanceForSub(merchant_sub)
-        user_balance = get_balance(user_sub)
+        merchant_balance = get_balance_for_sub(merchant_sub)
+        user_balance = get_balance_for_sub(user_sub)
 
         if user_balance < amount:
             raise Exception("Insufficient balance")
 
         # update balances for each
-        transaction_executor.execute_statement(f"UPDATE balances set balance = ${merchant_balance} where sub=${merchant_sub}")
-        transaction_executor.execute_statement(f"UPDATE balances set balance = ${user_balance - amount} where sub=${user_sub}")
+        try:
+            transaction_executor.execute_statement(f"UPDATE balances set balance = {merchant_balance} where sub=\'{merchant_sub}\'")
+        except Exception as _:
+            raise Exception("Unable to update merchant balance")
+
+        try:
+            statement = f"UPDATE balances set balance = {user_balance - amount} where sub=\'{user_sub}\'"
+            transaction_executor.execute_statement(statement)
+        except Exception as _:
+            raise Exception("Unable to update user balance")
 
         # insert into a transaction for the user
-        transaction_user = {
-            "key": key,
-            "sub": user_sub,
-            "amount": amount,
-            "description": user_description
-        }
-        transaction_executor.execute_statementf(f"INSERT into transactions VALUE ${json.dumps(transaction_user)}")
+        transaction_user = json.dumps({
+            'id': key,
+            'sub': user_sub,
+            'amount': amount,
+            'description': user_description
+        }).replace("\"", "'")
+        try:
+            statement = f"INSERT into transactions VALUE {transaction_user}"
+            transaction_executor.execute_statement(statement)
+        except Exception as _:
+            raise Exception("Unable to insert transactions into user")
 
         # insert a transaction for the merchant
-        transaction_merchant = {
-            "key": key,
+        transaction_merchant = json.dumps({
+            "id": "{key}-merchant".format(key=key),
             "sub": merchant_sub,
             "amount": amount,
             "description": merchant_description
-        }
-        transaction_executor.execute_statementf(f"INSERT into transactions VALUE ${json.dumps(transaction_merchant)}")
+        }).replace("\"", "'")
 
-    qldb_driver.execute_lambda(lambda executor: read_documents(executor))
+        try:
+            statement = f"INSERT into transactions VALUE {transaction_merchant}"
+            transaction_executor.execute_statement(statement)
+        except Exception as _:
+            raise Exception("Unable to insert transaction into merchant")
 
-    return True
+    qldb_driver.execute_lambda(lambda executor: execute_transaction(executor))
+
+    return {"key": key}
 
 
 # Enrich logging with contextual information from Lambda
