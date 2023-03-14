@@ -13,7 +13,7 @@ Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/devel
     Tracing: Active
     Environment:
       Variables:
-        LEDGER_NAME: !Ref QldbLedger
+        LEDGER_NAME: !Join [ '-', [rewards-ledger, Ref: "AWS::StackName"]]
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
   Api:
     TracingEnabled: True
@@ -32,6 +32,48 @@ Resources:
         AttributeName: expiration
         Enabled: true
       BillingMode: PAY_PER_REQUEST
+  RedeemFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
+    Properties:
+      Handler: app.lambda_handler
+      CodeUri: ./src/redeem
+      Description: Redeem function
+      Architectures:
+        - x86_64
+      Tracing: Active
+      Events:
+        MerchantApi:
+          Type: Api
+          Properties:
+            Path: /merchant/redeem
+            Method: POST
+            RestApiId: !Ref MerchantApi
+            RequestModel:
+              ValidateBody: true
+              Required: true
+              Model: RedeemRequestModel
+        # Powertools env vars: https://awslabs.github.io/aws-lambda-powertools-python/#environment-variables
+      Environment:
+        Variables:
+          POWERTOOLS_SERVICE_NAME: PowertoolsBalance
+          POWERTOOLS_METRICS_NAMESPACE: Powertools
+          LOG_LEVEL: INFO
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref IdempotencyTable
+        - AWSLambdaBasicExecutionRole
+        - Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - qldb:SendCommand
+              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/rewards-ledger-${AWS::StackName}
+            - Effect: Allow
+              Action:
+                - qldb:PartiQLSelect
+              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/rewards-ledger-${AWS::StackName}
+      Tags:
+        LambdaPowertools: python
   BalanceFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
     Properties:
@@ -42,12 +84,18 @@ Resources:
         - x86_64
       Tracing: Active
       Events:
-        RewardsApi:
+        RewardsUserApi:
           Type: Api
           Properties:
-            Path: /balance
+            Path: /user/balance
             Method: GET
-            RestApiId: !Ref RewardsApi  # Add this line
+            RestApiId: !Ref UserApi
+        RewardsMerchantApi:
+          Type: Api
+          Properties:
+            Path: /merchant/balance
+            Method: GET
+            RestApiId: !Ref MerchantApi
         # Powertools env vars: https://awslabs.github.io/aws-lambda-powertools-python/#environment-variables
       Environment:
         Variables:
@@ -61,11 +109,11 @@ Resources:
             - Effect: Allow
               Action:
                 - qldb:SendCommand
-              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/${QldbLedger}
+              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/rewards-ledger-${AWS::StackName}
             - Effect: Allow
               Action:
                 - qldb:PartiQLSelect
-              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/${QldbLedger}/*
+              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/rewards-ledger-${AWS::StackName}
       Tags:
         LambdaPowertools: python
   MyCognitoUserPool:
@@ -85,38 +133,71 @@ Resources:
     Type: AWS::Cognito::UserPoolClient
     Properties:
       UserPoolId: !Ref MyCognitoUserPool
-      #ClientName: !Ref CognitoUserPoolClientName
       GenerateSecret: false
-  RewardsApi:
+  MyCognitoMerchantPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Join [ '-', [ 'rewards-merchant-pool' , Ref: "AWS::StackName" ]]
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+      UsernameAttributes:
+        - email
+      Schema:
+        - AttributeDataType: String
+          Name: email
+          Required: false
+        - AttributeDataType: String
+          Name: company
+          Required: false
+  MyCognitoMerchantPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref MyCognitoMerchantPool
+      GenerateSecret: false
+  UserApi:
     Type: AWS::Serverless::Api
     Properties:
       StageName: Prod
-      Name: !Join [ '-', [ 'rewards-api' , Ref: "AWS::StackName" ]]
+      Name: !Join [ '-', [ 'rewards-user-api' , Ref: "AWS::StackName" ]]
       Cors: "'*'"
       Auth:
-        DefaultAuthorizer: MyCognitoAuthorizer
+        DefaultAuthorizer: MyCognitoUserAuthorizer
         Authorizers:
-          MyCognitoAuthorizer:
+          MyCognitoUserAuthorizer:
             UserPoolArn: !GetAtt MyCognitoUserPool.Arn
-  QldbLedger:  # Create Amazon QLDB ledger. Delete the ledger when the stack is deleted.
-    Type: "AWS::QLDB::Ledger"
+  MerchantApi:
+    Type: AWS::Serverless::Api
     Properties:
-      DeletionProtection: false
-      Name:  !Join [ '-', [ 'rewards-ledger' , Ref: "AWS::StackName" ]]
-      PermissionsMode: "STANDARD"
+      StageName: Prod
+      Name: !Join [ '-', [ 'rewards-merchant-api' , Ref: "AWS::StackName" ]]
+      Cors: "'*'"
+      Auth:
+        DefaultAuthorizer: MyCognitoMerchantAuthorizer
+        Authorizers:
+          MyCognitoMerchantAuthorizer:
+            UserPoolArn: !GetAtt MyCognitoMerchantPool.Arn
+      Models:
+        RedeemRequestModel:
+          type: object
+          user:
+            type: string
+          amount:
+            type: string
+          key:
+            type: string
+          merchant_description:
+            type: string
+          user_description:
+            type: string
 Outputs:
-#  CognitoID:
-#    Description: "The Cognito UserPool ID"
-#    Value: !Ref UserPool
-#  CognitoClientID:
-#    Description: "The Cognito UserPool Client ID"
-#    Value: !Ref UserPoolClient
-  RewardsApi:
+  RewardsUserApi:
     Description: "API Gateway endpoint URL for Prod stage for Rewards functions"
-    Value: !Sub "https://${RewardsApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/rewards/"
+    Value: !Sub "https://${UserApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/rewards/user/"
+  RewardsMerchantApi:
+    Description: "API Gateway endpoint URL for Prod stage for Rewards functions"
+    Value: !Sub "https://${MerchantApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/rewards/merchant/"
   BalanceFunction:
     Description: "Balance Lambda Function ARN"
     Value: !GetAtt BalanceFunction.Arn
-  RewardsLedger:
-    Description: "Amazon QLDB ledger name"
-    Value: !Ref QldbLedger
+
