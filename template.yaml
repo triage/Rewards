@@ -21,7 +21,6 @@ Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/devel
 Resources:
   IdempotencyTable:
     Type: AWS::DynamoDB::Table
-    TableName: "IdempotencyTable"
     Properties:
       AttributeDefinitions:
         - AttributeName: id
@@ -29,6 +28,7 @@ Resources:
       KeySchema:
         - AttributeName: id
           KeyType: HASH
+      TableName: "IdempotencyTable"
       TimeToLiveSpecification:
         AttributeName: expiration
         Enabled: true
