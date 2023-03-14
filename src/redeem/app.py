@@ -36,8 +36,6 @@ def redeem():
     body = json.loads(event["body"])
     user_sub, amount, key, merchant_description, user_description =\
         body["user_sub"], body["amount"], body["key"], body["merchant_description"], body["user_description"]
-
-    logger.info(f"key:{key}")
     retry_config = RetryConfig(retry_limit=3)
     qldb_driver = QldbDriver(ledger_name=os.environ.get("LEDGER_NAME"), retry_config=retry_config)
 

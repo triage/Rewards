@@ -21,6 +21,7 @@ Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/devel
 Resources:
   IdempotencyTable:
     Type: AWS::DynamoDB::Table
+    TableName: "IdempotencyTable"
     Properties:
       AttributeDefinitions:
         - AttributeName: id
