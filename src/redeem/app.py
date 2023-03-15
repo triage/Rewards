@@ -57,7 +57,7 @@ def redeem():
                 if first_record:
                     return first_record["balance"]
                 else:
-                    raise Exception("User does not exist")
+                    raise RedeemError(f"User does not exist:{sub}")
             except Exception as e:
                 raise e
 
