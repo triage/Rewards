@@ -1,6 +1,9 @@
 import json
 import os
 
+from aws_lambda_powertools.utilities.idempotency import (
+    DynamoDBPersistenceLayer, idempotent
+)
 from aws_lambda_powertools import Logger
 from aws_lambda_powertools import Metrics
 from aws_lambda_powertools import Tracer
@@ -18,10 +21,6 @@ tracer = Tracer()
 logger = Logger()
 metrics = Metrics(namespace="Powertools")
 
-from aws_lambda_powertools.utilities.idempotency import (
-    DynamoDBPersistenceLayer, idempotent
-)
-
 persistence_layer = DynamoDBPersistenceLayer(table_name="IdempotencyTable")
 
 
@@ -37,8 +36,9 @@ def redeem():
 
     merchant_sub = event["requestContext"]["authorizer"]["claims"]["sub"]
     body = json.loads(event["body"])
-    user_sub, amount, key, merchant_description, user_description =\
+    user_sub, amount, key, merchant_description, user_description = \
         body["user_sub"], body["amount"], body["key"], body["merchant_description"], body["user_description"]
+
     retry_config = RetryConfig(retry_limit=3)
     qldb_driver = QldbDriver(ledger_name=os.environ.get("LEDGER_NAME"), retry_config=retry_config)
 
@@ -72,10 +72,10 @@ def redeem():
 
         # update balances for each:
         # user
-        QLDBHelper.update_balance(user_sub, key, user_balance, transaction_executor)
+        QLDBHelper.update_balance(sub=user_sub, key=key, balance=user_balance, executor=transaction_executor)
 
         # merchant
-        QLDBHelper.update_balance(merchant_sub, key, merchant_balance, transaction_executor)
+        QLDBHelper.update_balance(sub=merchant_sub, key=key, balance=merchant_balance, executor=transaction_executor)
 
         # insert into a transaction for the user
         QLDBHelper.insert_transaction(values={
