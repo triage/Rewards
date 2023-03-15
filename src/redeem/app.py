@@ -82,7 +82,7 @@ def redeem():
             "id": "{key}-user".format(key=key),
             "key": key,
             "sub": user_sub,
-            "amount": amount,
+            "amount": -amount,
             "description": user_description
         }, executor=transaction_executor)
 

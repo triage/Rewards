@@ -191,6 +191,18 @@ Resources:
             type: string
           user_description:
             type: string
+  MyPostSignUpConfirmationLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src/signup-confirmation
+      Handler: index.handler
+      Runtime: python3.9
+      Events:
+        MyUserPoolPostSignUpConfirmation:
+          Type: CognitoUserPool
+          Properties:
+            UserPoolId: !Ref MyCognitoUserPool
+            Trigger: PostConfirmation
 Outputs:
   RewardsUserApi:
     Description: "API Gateway endpoint URL for Prod stage for Rewards functions"
