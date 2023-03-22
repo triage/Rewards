@@ -16,6 +16,7 @@ Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/devel
         LEDGER_NAME: !Join [ '-', [rewards-ledger, Ref: "AWS::StackName"]]
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
         USER_SIGNUP_REWARD: 50000
+        IDEMPOTENCY_TABLE_NAME: !Ref IdempotencyTable
   Api:
     TracingEnabled: True
 
@@ -29,7 +30,6 @@ Resources:
       KeySchema:
         - AttributeName: id
           KeyType: HASH
-      TableName: "IdempotencyTable"
       TimeToLiveSpecification:
         AttributeName: expiration
         Enabled: true

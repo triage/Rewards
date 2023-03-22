@@ -21,7 +21,7 @@ tracer = Tracer()
 logger = Logger()
 metrics = Metrics(namespace="Powertools")
 
-persistence_layer = DynamoDBPersistenceLayer(table_name="IdempotencyTable")
+persistence_layer = DynamoDBPersistenceLayer(table_name=os.environ.get("IDEMPOTENCY_TABLE_NAME"))
 
 
 class RedeemError(Exception):
