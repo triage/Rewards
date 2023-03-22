@@ -122,6 +122,8 @@ Resources:
     Type: AWS::Cognito::UserPool
     Properties:
       UserPoolName: !Join [ '-', [ 'rewards-user-pool' , Ref: "AWS::StackName" ]]
+      LambdaConfig:
+          PostConfirmation: !GetAtt MyPostSignUpConfirmationLambda.Arn
       Policies:
         PasswordPolicy:
           MinimumLength: 8
@@ -198,12 +200,6 @@ Resources:
       CodeUri: ./src/signup-confirmation
       Handler: index.handler
       Runtime: python3.9
-      Events:
-        NewUserTrigger:
-          Type: Cognito
-          Properties:
-            UserPool: !Ref MyCognitoUserPool
-            Trigger: PostConfirmation
 Outputs:
   RewardsUserApi:
     Description: "API Gateway - endpoint URL for Prod stage for Rewards functions"
