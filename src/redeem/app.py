@@ -37,7 +37,7 @@ def redeem():
     merchant_sub = event["requestContext"]["authorizer"]["claims"]["sub"]
     body = json.loads(event["body"])
     user_sub, amount, key, merchant_description, user_description = \
-        body["user_sub"], body["amount"], body["key"], body["merchant_description"], body["user_description"]
+        body["user_sub"], int(body["amount"]), body["key"], body["merchant_description"], body["user_description"]
 
     retry_config = RetryConfig(retry_limit=3)
     qldb_driver = QldbDriver(ledger_name=os.environ.get("LEDGER_NAME"), retry_config=retry_config)
@@ -50,7 +50,7 @@ def redeem():
         return transaction_amount <= balance
 
     def execute_transaction(transaction_executor):
-        def get_balance_for_sub(sub):
+        def get_balance_for_sub(sub) -> int:
             try:
                 cursor = transaction_executor.execute_statement("SELECT balance from balances WHERE sub = ?", sub)
                 first_record = next(cursor, None)

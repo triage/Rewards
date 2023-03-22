@@ -18,7 +18,6 @@ def lambda_context():
 
     return LambdaContext()
 
-
 @pytest.fixture()
 def apigw_event():
     return {

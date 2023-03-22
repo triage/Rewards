@@ -28,7 +28,7 @@ def signup_confirmation(event: dict, context: LambdaContext):
     user_sub = event.get("request.userAttributes.sub")
     retry_config = RetryConfig(retry_limit=3)
     qldb_driver = QldbDriver(ledger_name=os.environ.get("LEDGER_NAME"), retry_config=retry_config)
-    amount = os.environ.get("USER_SIGNUP_REWARD")
+    amount = int(os.environ.get("USER_SIGNUP_REWARD"))
     merchant_sub = "ISSUER"
     key = f"POST-SIGNUP-{user_sub}"
     description = "Signup bonus"
@@ -42,7 +42,7 @@ def signup_confirmation(event: dict, context: LambdaContext):
             "id": "{key}-user".format(key=key),
             "key": key,
             "sub": user_sub,
-            "amount": -amount,
+            "amount": amount,
             "description": description
         }, executor=transaction_executor)
 
@@ -56,15 +56,8 @@ def signup_confirmation(event: dict, context: LambdaContext):
             "user_sub": user_sub,
         }, executor=transaction_executor)
 
-        # update a balance
-        QLDBHelper.update_balance(values={
-            "id": "{key}-merchant".format(key=key),
-            "key": key,
-            "sub": merchant_sub,
-            "amount": amount,
-            "description": description,
-            "user_sub": user_sub,
-        }, executor=transaction_executor)
+        # update the balance to the new amount
+        QLDBHelper.update_balance(sub=user_sub, key=key, balance=amount, executor=transaction_executor)
 
     # Query the table
     qldb_driver.execute_lambda(lambda executor: execute_signup_confirmation(executor))
