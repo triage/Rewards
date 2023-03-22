@@ -15,6 +15,7 @@ tracer = Tracer()
 logger = Logger()
 metrics = Metrics(namespace="Powertools")
 
+
 @app.get("/user/balance")
 @app.get("/merchant/balance")
 @tracer.capture_method

@@ -15,6 +15,7 @@ Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/devel
       Variables:
         LEDGER_NAME: !Join [ '-', [rewards-ledger, Ref: "AWS::StackName"]]
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+        USER_SIGNUP_REWARD: 50000
   Api:
     TracingEnabled: True
 
@@ -28,6 +29,7 @@ Resources:
       KeySchema:
         - AttributeName: id
           KeyType: HASH
+      TableName: "IdempotencyTable"
       TimeToLiveSpecification:
         AttributeName: expiration
         Enabled: true
@@ -190,6 +192,18 @@ Resources:
             type: string
           user_description:
             type: string
+  MyPostSignUpConfirmationLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src/signup-confirmation
+      Handler: index.handler
+      Runtime: python3.9
+      Events:
+        NewUserTrigger:
+          Type: Cognito
+          Properties:
+            UserPool: !Ref MyCognitoUserPool
+            Trigger: PostConfirmation
 Outputs:
   RewardsUserApi:
     Description: "API Gateway endpoint URL for Prod stage for Rewards functions"

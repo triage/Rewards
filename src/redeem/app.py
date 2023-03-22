@@ -1,26 +1,31 @@
-import os
 import json
+import os
 
-from aws_lambda_powertools.event_handler import APIGatewayRestResolver
-from aws_lambda_powertools.utilities.typing import LambdaContext
-from aws_lambda_powertools.logging import correlation_paths
+from aws_lambda_powertools.utilities.idempotency import (
+    DynamoDBPersistenceLayer, idempotent
+)
 from aws_lambda_powertools import Logger
-from aws_lambda_powertools import Tracer
 from aws_lambda_powertools import Metrics
+from aws_lambda_powertools import Tracer
+from aws_lambda_powertools.event_handler import APIGatewayRestResolver
+from aws_lambda_powertools.logging import correlation_paths
 from aws_lambda_powertools.metrics import MetricUnit
-from pyqldb.driver.qldb_driver import QldbDriver
+from aws_lambda_powertools.utilities.typing import LambdaContext
 from pyqldb.config.retry_config import RetryConfig
+from pyqldb.driver.qldb_driver import QldbDriver
+
+from src.qldb.qldp_helper import QLDBHelper
 
 app = APIGatewayRestResolver()
 tracer = Tracer()
 logger = Logger()
 metrics = Metrics(namespace="Powertools")
 
-from aws_lambda_powertools.utilities.idempotency import (
-    DynamoDBPersistenceLayer, idempotent
-)
-
 persistence_layer = DynamoDBPersistenceLayer(table_name="IdempotencyTable")
+
+
+class RedeemError(Exception):
+    pass
 
 
 @app.post("/merchant/redeem")
@@ -29,81 +34,68 @@ def redeem():
     event = app.current_event
     metrics.add_metric(name="RedeemInvocations", unit=MetricUnit.Count, value=1)
 
-    # structured log
-    # See: https://awslabs.github.io/aws-lambda-powertools-python/latest/core/logger/
-    logger.info("Merchant API - Redeem- HTTP 200")
     merchant_sub = event["requestContext"]["authorizer"]["claims"]["sub"]
     body = json.loads(event["body"])
-    user_sub, amount, key, merchant_description, user_description =\
-        body["user_sub"], body["amount"], body["key"], body["merchant_description"], body["user_description"]
+    user_sub, amount, key, merchant_description, user_description = \
+        body["user_sub"], int(body["amount"]), body["key"], body["merchant_description"], body["user_description"]
 
-    logger.info(f"key:{key}")
     retry_config = RetryConfig(retry_limit=3)
     qldb_driver = QldbDriver(ledger_name=os.environ.get("LEDGER_NAME"), retry_config=retry_config)
 
-    def execute_transaction(transaction_executor):
+    def transaction_should_approve(balance: int, transaction_amount: int):
+        """
+        Return if all the requirements are met which allow this transaction to proceed.
+        For now, this just tracks if the user has sufficient balance
+        """
+        return transaction_amount <= balance
 
-        def get_balance_for_sub(sub):
+    def execute_transaction(transaction_executor):
+        def get_balance_for_sub(sub) -> int:
             try:
                 cursor = transaction_executor.execute_statement("SELECT balance from balances WHERE sub = ?", sub)
                 first_record = next(cursor, None)
                 if first_record:
                     return first_record["balance"]
                 else:
-                    raise Exception("User does not exist")
+                    raise RedeemError(f"User does not exist:{sub}")
             except Exception as e:
                 raise e
 
         merchant_balance = get_balance_for_sub(merchant_sub)
         user_balance = get_balance_for_sub(user_sub)
 
-        if user_balance < amount:
-            raise Exception("Insufficient balance")
+        if not transaction_should_approve(balance=user_balance, transaction_amount=amount):
+            raise RedeemError("Insufficient balance")
 
         user_balance -= amount
         merchant_balance += amount
 
-        # update balances for each
-        try:
-            statement = f"UPDATE balances set balance = {merchant_balance}, \"key\"=\'{key}\' where sub=\'{merchant_sub}\'"
-            transaction_executor.execute_statement(statement)
-        except Exception as _:
-            raise Exception("Unable to update merchant balance")
+        # update balances for each:
+        # user
+        QLDBHelper.update_balance(sub=user_sub, key=key, balance=user_balance, executor=transaction_executor)
 
-        try:
-            statement = f"UPDATE balances set balance = {user_balance}, \"key\" = \'{key}\' where sub=\'{user_sub}\'"
-            transaction_executor.execute_statement(statement)
-        except Exception as _:
-            raise Exception("Unable to update user balance")
+        # merchant
+        QLDBHelper.update_balance(sub=merchant_sub, key=key, balance=merchant_balance, executor=transaction_executor)
 
         # insert into a transaction for the user
-        transaction_user = json.dumps({
+        QLDBHelper.insert_transaction(values={
             "id": "{key}-user".format(key=key),
             "key": key,
             "sub": user_sub,
-            "amount": amount,
+            "merchant_sub": merchant_sub,
+            "amount": -amount,
             "description": user_description
-        }).replace("\"", "'")
-        try:
-            statement = f"INSERT into transactions VALUE {transaction_user}"
-            transaction_executor.execute_statement(statement)
-        except Exception as _:
-            raise Exception("Unable to insert transactions into user")
+        }, executor=transaction_executor)
 
         # insert a transaction for the merchant
-        transaction_merchant = json.dumps({
+        QLDBHelper.insert_transaction(values={
             "id": "{key}-merchant".format(key=key),
             "key": key,
             "sub": merchant_sub,
+            "user_sub": user_sub,
             "amount": amount,
             "description": merchant_description
-        }).replace("\"", "'")
-
-        try:
-            statement = f"INSERT into transactions VALUE {transaction_merchant}"
-            transaction_executor.execute_statement(statement)
-        except Exception as _:
-            raise Exception("Unable to insert transaction into merchant")
+        }, executor=transaction_executor)
 
     qldb_driver.execute_lambda(lambda executor: execute_transaction(executor))
 
