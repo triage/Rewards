@@ -13,7 +13,9 @@
       "sub": "c5de5a32-3b08-4db1-8a77-5b1e9244f4a8",
       "email_verified": "false",
       "cognito:user_status": "CONFIRMED",
-      "email": "johndoe@example.com"
+      "email": "johndoe@example.com",
+      "given_name": "Seymour",
+      "family_name": "Butts"
     }
   },
   "response": {}
