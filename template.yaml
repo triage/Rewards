@@ -206,7 +206,7 @@ Resources:
             Trigger: PostConfirmation
 Outputs:
   RewardsUserApi:
-    Description: "API Gateway endpoint URL for Prod stage for Rewards functions"
+    Description: "API Gateway - endpoint URL for Prod stage for Rewards functions"
     Value: !Sub "https://${UserApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/rewards/user/"
   RewardsMerchantApi:
     Description: "API Gateway endpoint URL for Prod stage for Rewards functions"
