@@ -29,7 +29,7 @@ Resources:
       KeySchema:
         - AttributeName: id
           KeyType: HASH
-      TableName: "IdempotencyTable"
+      #TableName: "IdempotencyTable"
       TimeToLiveSpecification:
         AttributeName: expiration
         Enabled: true
