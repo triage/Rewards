@@ -15,6 +15,7 @@ Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/devel
       Variables:
         LEDGER_NAME: !Join [ '-', [rewards-ledger, Ref: "AWS::StackName"]]
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+        USER_SIGNUP_REWARD: 50000
   Api:
     TracingEnabled: True
 
@@ -198,10 +199,10 @@ Resources:
       Handler: index.handler
       Runtime: python3.9
       Events:
-        MyUserPoolPostSignUpConfirmation:
-          Type: CognitoUserPool
+        NewUserTrigger:
+          Type: Cognito
           Properties:
-            UserPoolId: !Ref MyCognitoUserPool
+            UserPool: !Ref MyCognitoUserPool
             Trigger: PostConfirmation
 Outputs:
   RewardsUserApi:

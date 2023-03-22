@@ -82,6 +82,7 @@ def redeem():
             "id": "{key}-user".format(key=key),
             "key": key,
             "sub": user_sub,
+            "merchant_sub": merchant_sub,
             "amount": -amount,
             "description": user_description
         }, executor=transaction_executor)
@@ -91,6 +92,7 @@ def redeem():
             "id": "{key}-merchant".format(key=key),
             "key": key,
             "sub": merchant_sub,
+            "user_sub": user_sub,
             "amount": amount,
             "description": merchant_description
         }, executor=transaction_executor)

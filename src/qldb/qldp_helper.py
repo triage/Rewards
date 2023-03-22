@@ -32,6 +32,32 @@ class QLDBHelper:
             raise InsertTransactionError(exception=exception)
 
     @classmethod
+    def insert_balance(cls, sub: str, key: str, executor: object):
+        """
+        :type sub: str
+        :param sub of the user attempting to change balance for
+
+        :type key: str
+        :param key: transaction key
+
+        :type executor: lambda executor
+        :param executor: object that contains the function execute_statement
+
+        :raises InsertError: If insert fails
+
+        """
+        values = {
+            "key": key,
+            "balance": 0,
+            "sub": sub
+        }
+        try:
+            statement = f"INSERT INTO balances VALUE ?"
+            executor.execute_statement(statement, values)
+        except Exception as exception:
+            raise InsertTransactionError(exception=exception)
+
+    @classmethod
     def update_balance(cls, sub: str, key: str, balance: int, executor: object):
         """
         :type sub: str
