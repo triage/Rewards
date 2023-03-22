@@ -14,7 +14,7 @@ def lambda_context():
             self.invoked_function_arn = "arn:aws:lambda:eu-west-1:809313241234:function:test-func"
             self.aws_request_id = "52fdfc07-2182-154f-163f-5f0f9a621d72"
             os.environ["LEDGER_NAME"] = "rewards-ledgerstore-test"
-            os.environ["IDEMPOTENCY_TABLE"] = "ledgerstore-dev-IdempotencyTable-178A9ESK20Q9B"
+            os.environ["IDEMPOTENCY_TABLE_NAME"] = "ledgerstore-dev-IdempotencyTable-178A9ESK20Q9B"
 
         def get_remaining_time_in_millis(self) -> int:
              return 1000
