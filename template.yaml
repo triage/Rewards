@@ -17,10 +17,18 @@ Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/devel
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
         USER_SIGNUP_REWARD: 50000
         IDEMPOTENCY_TABLE_NAME: !Ref IdempotencyTable
+        ISSUER_IDENTITY: !Ref IssuerIdentity
   Api:
     TracingEnabled: True
 
 Resources:
+  IssuerIdentity:
+    Type: "AWS::SES::Identity"
+    Properties:
+      IdentityType: "EmailAddress"
+      Identity: "peoplefromgoodhomes@gmail.com"
+      DkimSigningEnabled: true
+      FeedbackForwardingEnabled: true
   IdempotencyTable:
     Type: AWS::DynamoDB::Table
     Properties:

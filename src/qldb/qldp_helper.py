@@ -25,11 +25,22 @@ class QLDBHelper:
         :raises InsertError: If insert fails
 
         """
-        try:
-            statement = f"INSERT INTO transactions VALUE ?"
-            executor.execute_statement(statement, values)
-        except Exception as exception:
-            raise InsertTransactionError(exception=exception)
+        if not values.contains("id"):
+            raise InsertTransactionError(exception="id is required")
+        query = "SELECT * FROM transactions WHERE id = ?", id
+        cursor = executor.execute_statement(query)
+        # Check if there is any record in the cursor
+        first_record = next(cursor, None)
+
+        if first_record:
+            # Record already exists, no need to insert
+            pass
+        else:
+            try:
+                statement = f"INSERT INTO transactions VALUE ?"
+                executor.execute_statement(statement, values)
+            except Exception as exception:
+                raise InsertTransactionError(exception=exception)
 
     @classmethod
     def insert_balance(cls, sub: str, key: str, executor: object):
@@ -46,16 +57,27 @@ class QLDBHelper:
         :raises InsertError: If insert fails
 
         """
-        values = {
-            "key": key,
-            "balance": 0,
-            "sub": sub
-        }
-        try:
-            statement = f"INSERT INTO balances VALUE ?"
-            executor.execute_statement(statement, values)
-        except Exception as exception:
-            raise InsertTransactionError(exception=exception)
+        # Check if doc with GovId:TOYENC486FH exists
+        # This is critical to make this transaction idempotent
+        query = "SELECT * FROM balances WHERE id = ?", sub
+        cursor = executor.execute_statement(query)
+        # Check if there is any record in the cursor
+        first_record = next(cursor, None)
+
+        if first_record:
+            # Record already exists, no need to insert
+            pass
+        else:
+            values = {
+                "key": key,
+                "balance": 0,
+                "sub": sub
+            }
+            try:
+                statement = f"INSERT INTO balances VALUE ?"
+                executor.execute_statement(statement, values)
+            except Exception as exception:
+                raise InsertTransactionError(exception=exception)
 
     @classmethod
     def update_balance(cls, sub: str, key: str, balance: int, executor: object):
