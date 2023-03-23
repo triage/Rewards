@@ -24,11 +24,13 @@ class QLDBHelper:
 
         :raises InsertError: If insert fails
 
+        :return: id of the inserted record
+
         """
-        if not values.contains("id"):
+        id = values.get("id")
+        if not id:
             raise InsertTransactionError(exception="id is required")
-        query = "SELECT * FROM transactions WHERE id = ?", id
-        cursor = executor.execute_statement(query)
+        cursor = executor.execute_statement("SELECT * FROM transactions WHERE id = ?", id)
         # Check if there is any record in the cursor
         first_record = next(cursor, None)
 
@@ -41,7 +43,7 @@ class QLDBHelper:
                 executor.execute_statement(statement, values)
             except Exception as exception:
                 raise InsertTransactionError(exception=exception)
-
+        return id
     @classmethod
     def insert_balance(cls, sub: str, key: str, executor: object):
         """
@@ -59,8 +61,7 @@ class QLDBHelper:
         """
         # Check if doc with GovId:TOYENC486FH exists
         # This is critical to make this transaction idempotent
-        query = "SELECT * FROM balances WHERE id = ?", sub
-        cursor = executor.execute_statement(query)
+        cursor = executor.execute_statement("SELECT * FROM balances WHERE id = ?", sub)
         # Check if there is any record in the cursor
         first_record = next(cursor, None)
 
@@ -78,6 +79,7 @@ class QLDBHelper:
                 executor.execute_statement(statement, values)
             except Exception as exception:
                 raise InsertTransactionError(exception=exception)
+        return key
 
     @classmethod
     def update_balance(cls, sub: str, key: str, balance: int, executor: object):
