@@ -3,3 +3,4 @@ boto3==1.26.88
 requests
 aws_lambda_powertools
 Mock
+pytest-asyncio
