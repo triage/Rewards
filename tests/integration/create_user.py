@@ -38,10 +38,9 @@ class CognitoUser:
 
     async def __login(self) -> dict:
         client = boto3.client('cognito-idp', region_name='us-east-1')
-        response = client.admin_initiate_auth(
-            UserPoolId=self.user_pool_id,
+        response = client.initiate_auth(
             ClientId=self.client_id,
-            AuthFlow='ADMIN_NO_SRP_AUTH',
+            AuthFlow='USER_PASSWORD_AUTH',
             AuthParameters={
                 'USERNAME': self.email,
                 'PASSWORD': self.password
