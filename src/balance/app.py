@@ -28,7 +28,7 @@ def get_balance(qldb_driver: QldbDriver = None, event: APIGatewayRestResolver = 
 
     # structured log
     # See: https://awslabs.github.io/aws-lambda-powertools-python/latest/core/logger/
-    logger.info("LedgerStore API - HTTP 200")
+    logger.info("LedgerStore API - /balance HTTP 200")
     sub = event["requestContext"]["authorizer"]["claims"]["sub"]
     retry_config = RetryConfig(retry_limit=3)
     if not qldb_driver:

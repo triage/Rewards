@@ -3,7 +3,7 @@ import os
 import pytest
 from datetime import datetime
 
-from src.redeem import app
+from src.merchant.redeem import app
 
 
 def lambda_context():

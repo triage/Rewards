@@ -1,56 +1,61 @@
 import boto3
-import pytest
 
 
 class CognitoUser:
 
-    @classmethod
-    async def create_user_and_login(cls, user_pool_id: str, client_id: str, email: str, password: str) -> dict:
-        user = await cls.__create_user(user_pool_id, email, "test_password")
-        await cls.__update_password(user_pool_id, email, password)
-        client = await cls.__login(
-            user_pool_id=user_pool_id, client_id=client_id, email=email, password=password
-        )
+    def __init__(self, user_pool_id: str, client_id: str, email: str, password: str):
+        self.user_pool_id = user_pool_id
+        self.client_id = client_id
+        self.email = email
+        self.password = password
+        self.authentication_headers: dict = None
+        self.sub: str = None
+
+    def is_logged_in(self) -> bool:
+        return self.authentication_headers is not None
+
+    async def create_user_and_login(self) -> dict:
+        user = await self.__create_user()
+        await self.__update_password()
+        client = await self.__login()
         return {"user": user, "client": client}
 
-    @classmethod
-    async def __create_user(cls, user_pool_id: str, email: str, password: str):
+    async def __create_user(self):
         client = boto3.client('cognito-idp', region_name='us-east-1')
         response = client.admin_create_user(
-            UserPoolId=user_pool_id,
-            Username=email,
-            TemporaryPassword=password,
+            UserPoolId=self.user_pool_id,
+            Username=self.email,
+            TemporaryPassword="temporary_password",
             UserAttributes=[
                 {
                     'Name': 'email',
-                    'Value': email
+                    'Value': self.email
                 },
             ],
         )
+        self.sub = response['User']['Username']
         return response
 
-    @classmethod
-    async def __login(cls, user_pool_id: str, client_id: str, email: str, password: str) -> dict:
+    async def __login(self) -> dict:
         client = boto3.client('cognito-idp', region_name='us-east-1')
         response = client.admin_initiate_auth(
-            UserPoolId=user_pool_id,
-            ClientId=client_id,
+            UserPoolId=self.user_pool_id,
+            ClientId=self.client_id,
             AuthFlow='ADMIN_NO_SRP_AUTH',
             AuthParameters={
-                'USERNAME': email,
-                'PASSWORD': password
+                'USERNAME': self.email,
+                'PASSWORD': self.password
             },
         )
         token = response['AuthenticationResult']['AccessToken']
         headers = {'Authorization': f'Bearer {token}'}
-        return headers
+        self.authentication_headers = headers
 
-    @classmethod
-    async def __update_password(cls, user_pool_id: str, email: str, password: str) -> dict:
+    async def __update_password(self) -> dict:
         client = boto3.client('cognito-idp', region_name='us-east-1')
         client.admin_set_user_password(
-            UserPoolId=user_pool_id,
-            Username=email,
-            Password=password,
+            UserPoolId=self.user_pool_id,
+            Username=self.email,
+            Password=self.password,
             Permanent=True  # set to False if the user is required to change their password on next login
         )

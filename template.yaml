@@ -38,7 +38,7 @@ Resources:
     Type: AWS::Serverless::Function # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
     Properties:
       Handler: app.lambda_handler
-      CodeUri: ./src/redeem
+      CodeUri: ./src/merchant/redeem
       Description: Redeem function
       Architectures:
         - x86_64
@@ -123,7 +123,7 @@ Resources:
     Properties:
       UserPoolName: !Join [ '-', [ 'rewards-user-pool' , Ref: "AWS::StackName" ]]
       LambdaConfig:
-          PostConfirmation: !GetAtt MyPostSignUpConfirmationLambda.Arn
+          PostConfirmation: !GetAtt MyPostSignUpUserConfirmationLambda.Arn
       Policies:
         PasswordPolicy:
           MinimumLength: 8
@@ -142,6 +142,8 @@ Resources:
     Type: AWS::Cognito::UserPool
     Properties:
       UserPoolName: !Join [ '-', [ 'rewards-merchant-pool' , Ref: "AWS::StackName" ]]
+      LambdaConfig:
+          PostConfirmation: !GetAtt MyPostSignUpMerchantConfirmationLambda.Arn
       Policies:
         PasswordPolicy:
           MinimumLength: 8
@@ -194,10 +196,16 @@ Resources:
             type: string
           user_description:
             type: string
-  MyPostSignUpConfirmationLambda:
+  MyPostSignUpUserConfirmationLambda:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./src/signup-confirmation
+      CodeUri: ./src/issuer/signup-confirmation/user
+      Handler: index.handler
+      Runtime: python3.9
+  MyPostSignUpMerchantConfirmationLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src/issuer/signup-confirmation/merchant
       Handler: index.handler
       Runtime: python3.9
 Outputs:

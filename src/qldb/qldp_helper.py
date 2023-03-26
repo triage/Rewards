@@ -44,6 +44,7 @@ class QLDBHelper:
             except Exception as exception:
                 raise InsertTransactionError(exception=exception)
         return id
+
     @classmethod
     def insert_balance(cls, sub: str, key: str, executor: object):
         """
