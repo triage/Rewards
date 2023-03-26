@@ -35,7 +35,7 @@ def get_balance(qldb_driver: QldbDriver = None, event: APIGatewayRestResolver = 
         qldb_driver = QldbDriver(ledger_name=os.environ.get("LEDGER_NAME"), retry_config=retry_config)
 
     def read_documents(transaction_executor):
-        print("Querying the table")
+        logger.info("Querying the table on db: {db}".format(db=os.environ.get("LEDGER_NAME")))
         try:
             cursor = transaction_executor.execute_statement("SELECT balance from balances WHERE sub = ?", sub)
             first_record = next(cursor, None)
