@@ -8,7 +8,7 @@ from tests.integration.create_user import CognitoUser
 
 def generate_test_email():
     random_uuid = str(uuid.uuid4())
-    return f"test_{random_uuid}@strategicinformationservices.com"
+    return f"peoplefromgoodhomes+{random_uuid}@gmail.com"
 
 
 class API(Enum):

@@ -46,7 +46,7 @@ class CognitoUser:
                 'PASSWORD': self.password
             },
         )
-        token = response['AuthenticationResult']['AccessToken']
+        token = response['AuthenticationResult']['IdToken']
         headers = {'Authorization': f'Bearer {token}'}
         self.authentication_headers = headers
 

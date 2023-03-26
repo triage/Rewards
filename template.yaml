@@ -13,7 +13,7 @@ Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/devel
     Tracing: Active
     Environment:
       Variables:
-        LEDGER_NAME: !Join [ '-', [rewards-ledger, Ref: "AWS::StackName"]]
+        LEDGER_NAME: !Ref: "AWS::StackName"
         AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
         USER_SIGNUP_REWARD: 50000
         IDEMPOTENCY_TABLE_NAME: !Ref IdempotencyTable
