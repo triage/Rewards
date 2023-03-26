@@ -24,6 +24,8 @@ metrics = Metrics(namespace="Powertools")
 table_name=os.environ.get("IDEMPOTENCY_TABLE_NAME")\
     if os.environ.get("IDEMPOTENCY_TABLE_NAME") is not None else "ledgerstore-dev-IdempotencyTable-8OIO7OUQBFCJ"
 persistence_layer = DynamoDBPersistenceLayer(table_name)
+
+
 class RedeemError(Exception):
     pass
 
