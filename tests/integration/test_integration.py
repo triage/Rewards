@@ -47,11 +47,11 @@ async def test_integration():
 
     # get balance of merchant, assert it's 0
     merchant_balance = requests.get(API.MERCHANT.url("/merchant/balance"), headers=merchant.authentication_headers)
-    assert merchant_balance["balance"] == 0
+    assert merchant_balance["response"]["balance"] == 0
 
     # get balance of user, assert it's equal to the signup bonus
     user_balance = requests.get(API.USER.url("/user/balance"), headers=user.authentication_headers)
-    assert user_balance["balance"] == 0
+    assert user_balance["response"]["balance"] == 0
 
     # redeem from a merchant for an amount
 

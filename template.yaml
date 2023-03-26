@@ -125,7 +125,7 @@ Resources:
     Properties:
       UserPoolName: !Join [ '-', [ 'rewards-user-pool' , Ref: "AWS::StackName" ]]
       LambdaConfig:
-          PostConfirmation: !GetAtt MyPostSignUpUserConfirmationLambda.Arn
+          PreSignUp: !GetAtt MyPostSignUpUserConfirmationLambda.Arn
       Policies:
         PasswordPolicy:
           MinimumLength: 8
@@ -145,7 +145,7 @@ Resources:
     Properties:
       UserPoolName: !Join [ '-', [ 'rewards-merchant-pool' , Ref: "AWS::StackName" ]]
       LambdaConfig:
-          PostConfirmation: !GetAtt MyPostSignUpMerchantConfirmationLambda.Arn
+          PreSignUp: !GetAtt MyPostSignUpMerchantConfirmationLambda.Arn
       Policies:
         PasswordPolicy:
           MinimumLength: 8
