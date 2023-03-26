@@ -63,6 +63,7 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref IdempotencyTable
+        - AmazonQLDBFullAccess
         - AWSLambdaBasicExecutionRole
         - Version: 2012-10-17
           Statement:
@@ -105,6 +106,7 @@ Resources:
           POWERTOOLS_METRICS_NAMESPACE: Powertools
           LOG_LEVEL: INFO
       Policies:
+        - AmazonQLDBFullAccess
         - AWSLambdaBasicExecutionRole
         - Version: 2012-10-17
           Statement:
@@ -206,6 +208,7 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref IdempotencyTable
         - AWSLambdaBasicExecutionRole
+        - AmazonQLDBFullAccess
         - Version: 2012-10-17
           Statement:
             - Effect: Allow
@@ -225,6 +228,7 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref IdempotencyTable
+        - AmazonQLDBFullAccess
         - AWSLambdaBasicExecutionRole
         - Version: 2012-10-17
           Statement:
