@@ -69,11 +69,11 @@ Resources:
             - Effect: Allow
               Action:
                 - qldb:SendCommand
-              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/rewards-ledger-${AWS::StackName}
+              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/${AWS::StackName}
             - Effect: Allow
               Action:
                 - qldb:PartiQLSelect
-              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/rewards-ledger-${AWS::StackName}
+              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/${AWS::StackName}
       Tags:
         LambdaPowertools: python
   BalanceFunction:
@@ -111,11 +111,11 @@ Resources:
             - Effect: Allow
               Action:
                 - qldb:SendCommand
-              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/rewards-ledger-${AWS::StackName}
+              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/${AWS::StackName}
             - Effect: Allow
               Action:
                 - qldb:PartiQLSelect
-              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/rewards-ledger-${AWS::StackName}
+              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/${AWS::StackName}
       Tags:
         LambdaPowertools: python
   MyCognitoUserPool:
@@ -202,12 +202,40 @@ Resources:
       CodeUri: ./src/issuer/signup-confirmation/user
       Handler: index.handler
       Runtime: python3.9
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref IdempotencyTable
+        - AWSLambdaBasicExecutionRole
+        - Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - qldb:SendCommand
+              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/${AWS::StackName}
+            - Effect: Allow
+              Action:
+                - qldb:PartiQLSelect
+              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/${AWS::StackName}
   MyPostSignUpMerchantConfirmationLambda:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: ./src/issuer/signup-confirmation/merchant
       Handler: index.handler
       Runtime: python3.9
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref IdempotencyTable
+        - AWSLambdaBasicExecutionRole
+        - Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - qldb:SendCommand
+              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/${AWS::StackName}
+            - Effect: Allow
+              Action:
+                - qldb:PartiQLSelect
+              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/${AWS::StackName}
 Outputs:
   RewardsUserApi:
     Description: "API Gateway - endpoint URL for Prod stage for Rewards functions"
