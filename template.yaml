@@ -124,8 +124,6 @@ Resources:
     Type: AWS::Cognito::UserPool
     Properties:
       UserPoolName: !Join [ '-', [ 'rewards-user-pool' , Ref: "AWS::StackName" ]]
-      LambdaConfig:
-          PreSignUp: !GetAtt MyPostSignUpUserConfirmationLambda.Arn
       Policies:
         PasswordPolicy:
           MinimumLength: 8
@@ -144,8 +142,6 @@ Resources:
     Type: AWS::Cognito::UserPool
     Properties:
       UserPoolName: !Join [ '-', [ 'rewards-merchant-pool' , Ref: "AWS::StackName" ]]
-      LambdaConfig:
-          PreSignUp: !GetAtt MyPostSignUpMerchantConfirmationLambda.Arn
       Policies:
         PasswordPolicy:
           MinimumLength: 8
@@ -204,6 +200,12 @@ Resources:
       CodeUri: ./src/issuer/signup-confirmation/user
       Handler: index.handler
       Runtime: python3.9
+      Events:
+        CognitoPostConfirmation:
+          Type: Cognito
+          Properties:
+            UserPool: !Ref MyCognitoUserPool
+            Trigger: PostConfirmation
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref IdempotencyTable
@@ -225,6 +227,12 @@ Resources:
       CodeUri: ./src/issuer/signup-confirmation/merchant
       Handler: index.handler
       Runtime: python3.9
+      Events:
+        CognitoPostConfirmation:
+          Type: Cognito
+          Properties:
+            UserPool: !Ref MyCognitoMerchantPool
+            Trigger: PostConfirmation
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref IdempotencyTable
@@ -240,6 +248,23 @@ Resources:
               Action:
                 - qldb:PartiQLSelect
               Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/${AWS::StackName}
+  MyPreSignUpConfirmationLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src/issuer/pre-signup
+      Handler: index.handler
+      Runtime: python3.9
+      Events:
+        CognitoMerchantPreSignUp:
+          Type: Cognito
+          Properties:
+            UserPool: !Ref MyCognitoUserPool
+            Trigger: PreSignUp
+        CognitoUerPreSignUp:
+          Type: Cognito
+          Properties:
+            UserPool: !Ref MyCognitoMerchantPool
+            Trigger: PreSignUp
 Outputs:
   RewardsUserApi:
     Description: "API Gateway - endpoint URL for Prod stage for Rewards functions"
