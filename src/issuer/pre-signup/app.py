@@ -43,4 +43,4 @@ def pre_signup(event: dict):
 # ensures metrics are flushed upon request completion/failure and capturing ColdStart metric
 @metrics.log_metrics(capture_cold_start_metric=True)
 def lambda_handler(event: dict, context: LambdaContext) -> dict:
-    return pre_signup(event, context)
+    return pre_signup(event=event)
