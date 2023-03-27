@@ -134,8 +134,8 @@ Resources:
           Name: email
           Required: false
       LambdaConfig:
-        PreSignUp: !Ref MyPreSignUpConfirmationLambda
-        PostConfirmation: !Ref MyPostSignUpUserConfirmationLambda
+        PreSignUp: !GetAtt 'MyPreSignUpConfirmationLambda.Arn'
+        PostConfirmation:  !GetAtt 'MyPostSignUpUserConfirmationLambda.Arn'
   MyCognitoUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
@@ -158,8 +158,8 @@ Resources:
           Name: company
           Required: false
       LambdaConfig:
-        PreSignUp: !Ref MyPreSignUpConfirmationLambda
-        PostConfirmation: !Ref MyPostSignUpMerchantConfirmationLambda
+        PreSignUp: !GetAtt 'MyPreSignUpConfirmationLambda.Arn'
+        PostConfirmation:  !GetAtt 'MyPostSignUpMerchantConfirmationLambda.Arn'
   MyCognitoMerchantPoolClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
