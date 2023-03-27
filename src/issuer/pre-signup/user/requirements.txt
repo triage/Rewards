@@ -1,3 +1,7 @@
-boto3==1.26.97
-aws_lambda_powertools==2.10.0
+amazon.ion~=0.9.3
+boto3~=1.24.93
+botocore~=1.27.93
+ionhash~=1.2.1
 pyqldb
+aws_lambda_powertools
+aws_xray_sdk
