@@ -2,10 +2,7 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
   ledgerstore
-
-  Powertools example
-
-Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-specification-template-anatomy-globals.html
+Globals:
   Function:
     Timeout: 5
     MemorySize: 128
@@ -19,7 +16,6 @@ Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/devel
         IDEMPOTENCY_TABLE_NAME: !Ref IdempotencyTable
   Api:
     TracingEnabled: True
-
 Resources:
   IdempotencyTable:
     Type: AWS::DynamoDB::Table
@@ -134,8 +130,7 @@ Resources:
           Name: email
           Required: false
       LambdaConfig:
-        PreSignUp: !GetAtt 'MyPreSignUpConfirmationLambda.Arn'
-        PostConfirmation:  !GetAtt 'MyPostSignUpUserConfirmationLambda.Arn'
+        PreSignUp: !GetAtt 'MyPreSignUpUserConfirmationLambda.Arn'
   MyCognitoUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
@@ -158,8 +153,7 @@ Resources:
           Name: company
           Required: false
       LambdaConfig:
-        PreSignUp: !GetAtt 'MyPreSignUpConfirmationLambda.Arn'
-        PostConfirmation:  !GetAtt 'MyPostSignUpMerchantConfirmationLambda.Arn'
+        PreSignUp: !GetAtt 'MyPreSignUpMerchantConfirmationLambda.Arn'
   MyCognitoMerchantPoolClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
@@ -169,28 +163,14 @@ Resources:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !GetAtt MyPreSignUpConfirmationLambda.Arn
+      FunctionName: !GetAtt MyPreSignUpUserConfirmationLambda.Arn
       Principal: cognito-idp.amazonaws.com
       SourceArn: !Sub "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${MyCognitoUserPool}"
   MyMerchantPoolPreSignUpPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !GetAtt MyPostSignUpMerchantConfirmationLambda.Arn
-      Principal: cognito-idp.amazonaws.com
-      SourceArn: !Sub "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${MyCognitoMerchantPool}"
-  MyUserPoolPostConfirmationPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !GetAtt MyPostSignUpUserConfirmationLambda.Arn
-      Principal: cognito-idp.amazonaws.com
-      SourceArn: !Sub "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${MyCognitoUserPool}"
-  MyMerchantPoolPostConfirmationPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !GetAtt MyPreSignUpConfirmationLambda.Arn
+      FunctionName: !GetAtt MyPreSignUpMerchantConfirmationLambda.Arn
       Principal: cognito-idp.amazonaws.com
       SourceArn: !Sub "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${MyCognitoMerchantPool}"
   UserApi:
@@ -228,10 +208,10 @@ Resources:
             type: string
           user_description:
             type: string
-  MyPostSignUpUserConfirmationLambda:
+  MyPreSignUpUserConfirmationLambda:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./src/issuer/signup-confirmation/user
+      CodeUri: ./src/issuer/pre-signup/user
       Handler: app.lambda_handler
       Runtime: python3.9
       Policies:
@@ -249,10 +229,10 @@ Resources:
               Action:
                 - qldb:PartiQLSelect
               Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/${AWS::StackName}
-  MyPostSignUpMerchantConfirmationLambda:
+  MyPreSignUpMerchantConfirmationLambda:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./src/issuer/signup-confirmation/merchant
+      CodeUri: ./src/issuer/pre-signup/merchant
       Handler: app.lambda_handler
       Runtime: python3.9
       Policies:
@@ -270,14 +250,6 @@ Resources:
               Action:
                 - qldb:PartiQLSelect
               Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/${AWS::StackName}
-  MyPreSignUpConfirmationLambda:
-    Type: AWS::Serverless::Function
-    Properties:
-      CodeUri: ./src/issuer/pre-signup
-      Handler: app.lambda_handler
-      Runtime: python3.9
-      Policies:
-        - AWSLambdaBasicExecutionRole
 Outputs:
   RewardsUserApi:
     Description: "API Gateway - endpoint URL for Prod stage for Rewards functions"

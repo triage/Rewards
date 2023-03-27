@@ -24,7 +24,7 @@ def signup_confirmation(event: dict):
 
     # structured log
     # See: https://awslabs.github.io/aws-lambda-powertools-python/latest/core/logger/
-    logger.info("LedgerStore API - issuer/signup-confirmation/user HTTP 200")
+    logger.info("LedgerStore API - issuer/pre-signup/user HTTP 200")
     user_sub = event.get("request.userAttributes.sub")
     retry_config = RetryConfig(retry_limit=3)
     qldb_driver = QldbDriver(ledger_name=os.environ.get("LEDGER_NAME"), retry_config=retry_config)
