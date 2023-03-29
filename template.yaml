@@ -262,10 +262,10 @@ Resources:
     Type: AWS::Serverless::LayerVersion
     Properties:
       ContentUri: ./src/qldb
+    Metadata:
+      BuildMethod: python3.9
       CompatibleRuntimes:
         - python3.9
-      Metadata:
-        BuildMethod: python3.9
 Outputs:
   RewardsUserApi:
     Description: "API Gateway - endpoint URL for Prod stage for Rewards functions"
