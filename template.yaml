@@ -36,7 +36,7 @@ Resources:
       Handler: app.lambda_handler
       CodeUri: ./src/merchant/redeem
       Layers:
-        - arn:aws:lambda:us-east-1:377861569334:layer:QLDBHelper:1
+        - !Ref QLDBLambdaLayer
       Description: Redeem function
       Architectures:
         - x86_64
@@ -81,7 +81,7 @@ Resources:
       Handler: app.lambda_handler
       CodeUri: ./src/balance
       Layers:
-        - arn:aws:lambda:us-east-1:377861569334:layer:QLDBHelper:1
+        - !Ref QLDBLambdaLayer
       Description: Balance function
       Architectures:
         - x86_64
@@ -219,7 +219,7 @@ Resources:
       Handler: app.lambda_handler
       Runtime: python3.9
       Layers:
-        - arn:aws:lambda:us-east-1:377861569334:layer:QLDBHelper:1
+        - !Ref QLDBLambdaLayer
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref IdempotencyTable
@@ -242,7 +242,7 @@ Resources:
       Handler: app.lambda_handler
       Runtime: python3.9
       Layers:
-        - arn:aws:lambda:us-east-1:377861569334:layer:QLDBHelper:1
+        - !Ref QLDBLambdaLayer
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref IdempotencyTable
@@ -258,6 +258,12 @@ Resources:
               Action:
                 - qldb:PartiQLSelect
               Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/${AWS::StackName}
+  QLDBHelperLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      ContentUri: ./src/qldb
+      CompatibleRuntimes:
+        - python3.9
 Outputs:
   RewardsUserApi:
     Description: "API Gateway - endpoint URL for Prod stage for Rewards functions"
