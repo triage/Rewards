@@ -35,6 +35,8 @@ Resources:
     Properties:
       Handler: app.lambda_handler
       CodeUri: ./src/merchant/redeem
+      Layers:
+        - arn:aws:lambda:us-east-1:377861569334:layer:QLDBHelper:1
       Description: Redeem function
       Architectures:
         - x86_64
@@ -78,6 +80,8 @@ Resources:
     Properties:
       Handler: app.lambda_handler
       CodeUri: ./src/balance
+      Layers:
+        - arn:aws:lambda:us-east-1:377861569334:layer:QLDBHelper:1
       Description: Balance function
       Architectures:
         - x86_64
@@ -214,6 +218,8 @@ Resources:
       CodeUri: ./src/issuer/pre-signup/user
       Handler: app.lambda_handler
       Runtime: python3.9
+      Layers:
+        - arn:aws:lambda:us-east-1:377861569334:layer:QLDBHelper:1
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref IdempotencyTable
@@ -235,6 +241,8 @@ Resources:
       CodeUri: ./src/issuer/pre-signup/merchant
       Handler: app.lambda_handler
       Runtime: python3.9
+      Layers:
+        - arn:aws:lambda:us-east-1:377861569334:layer:QLDBHelper:1
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref IdempotencyTable

@@ -14,8 +14,6 @@ from aws_lambda_powertools.utilities.typing import LambdaContext
 from pyqldb.config.retry_config import RetryConfig
 from pyqldb.driver.qldb_driver import QldbDriver
 
-from src.qldb.qldp_helper import QLDBHelper
-
 app = APIGatewayRestResolver()
 tracer = Tracer()
 logger = Logger()
