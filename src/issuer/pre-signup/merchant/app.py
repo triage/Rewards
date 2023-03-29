@@ -57,4 +57,4 @@ def signup_confirmation(event: dict, context: LambdaContext):
 # ensures metrics are flushed upon request completion/failure and capturing ColdStart metric
 @metrics.log_metrics(capture_cold_start_metric=True)
 def lambda_handler(event: dict, context: LambdaContext) -> dict:
-    return signup_confirmation(event)
+    return signup_confirmation(event=event, context=context)
