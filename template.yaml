@@ -260,12 +260,15 @@ Resources:
               Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/${AWS::StackName}
   QLDBHelperLayer:
     Type: AWS::Serverless::LayerVersion
+    LayerName: !Join [ '-', [ 'qldb-helper-layer' , Ref: "AWS::StackName" ]]
+    CompatibleRuntimes:
+      - python3.9
     Properties:
-      ContentUri: ./src/qldb
-    Metadata:
-      BuildMethod: python3.9
+      ContentUri: ./src/qldb_helper
       CompatibleRuntimes:
         - python3.9
+    Metadata:
+      BuildMethod: python3.9
 Outputs:
   RewardsUserApi:
     Description: "API Gateway - endpoint URL for Prod stage for Rewards functions"
