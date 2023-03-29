@@ -36,7 +36,7 @@ Resources:
       Handler: app.lambda_handler
       CodeUri: ./src/merchant/redeem
       Layers:
-        - !Ref QLDBLambdaLayer
+        - !Ref QLDBHelperLayer
       Description: Redeem function
       Architectures:
         - x86_64
@@ -81,7 +81,7 @@ Resources:
       Handler: app.lambda_handler
       CodeUri: ./src/balance
       Layers:
-        - !Ref QLDBLambdaLayer
+        - !Ref QLDBHelperLayer
       Description: Balance function
       Architectures:
         - x86_64
@@ -219,7 +219,7 @@ Resources:
       Handler: app.lambda_handler
       Runtime: python3.9
       Layers:
-        - !Ref QLDBLambdaLayer
+        - !Ref QLDBHelperLayer
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref IdempotencyTable
@@ -242,7 +242,7 @@ Resources:
       Handler: app.lambda_handler
       Runtime: python3.9
       Layers:
-        - !Ref QLDBLambdaLayer
+        - !Ref QLDBHelperLayer
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref IdempotencyTable
