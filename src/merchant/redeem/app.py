@@ -13,7 +13,6 @@ from aws_lambda_powertools.metrics import MetricUnit
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from pyqldb.config.retry_config import RetryConfig
 from pyqldb.driver.qldb_driver import QldbDriver
-from qldb_helper import qldb_helper
 
 app = APIGatewayRestResolver()
 tracer = Tracer()
@@ -23,7 +22,6 @@ metrics = Metrics(namespace="Powertools")
 table_name=os.environ.get("IDEMPOTENCY_TABLE_NAME")\
     if os.environ.get("IDEMPOTENCY_TABLE_NAME") is not None else "ledgerstore-dev-IdempotencyTable-8OIO7OUQBFCJ"
 persistence_layer = DynamoDBPersistenceLayer(table_name)
-
 
 class RedeemError(Exception):
     pass
