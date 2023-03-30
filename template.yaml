@@ -260,7 +260,7 @@ Resources:
               Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/${AWS::StackName}
   QLDBHelperLayer:
     Type: AWS::Serverless::LayerVersion
-    LayerName: !Join [ '-', [ 'qldb-helper-layer' , Ref: "AWS::StackName" ]]
+    LayerName: 'QLDBHelperLayer'
     CompatibleRuntimes:
       - python3.9
     Properties:
