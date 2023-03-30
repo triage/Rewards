@@ -34,10 +34,10 @@ def signup_confirmation(event: dict):
 
     def execute_signup_confirmation(transaction_executor):
         # initialize the user
-        qldb_helper.insert_balance(sub=user_sub, key=f"user-initialize-{user_sub}")
+        QLDBHelper.insert_balance(sub=user_sub, key=f"user-initialize-{user_sub}")
 
         # insert into a transaction for the user
-        qldb_helper.insert_transaction(values={
+        QLDBHelper.insert_transaction(values={
             "id": "{key}-user".format(key=key),
             "key": key,
             "sub": user_sub,
@@ -46,7 +46,7 @@ def signup_confirmation(event: dict):
         }, executor=transaction_executor)
 
         # insert a transaction for the issuer
-        qldb_helper.insert_transaction(values={
+        QLDBHelper.insert_transaction(values={
             "id": "{key}-issuer".format(key=key),
             "key": key,
             "sub": issuer_sub,
@@ -56,7 +56,7 @@ def signup_confirmation(event: dict):
         }, executor=transaction_executor)
 
         # update the balance to the new amount
-        qldb_helper.update_balance(sub=user_sub, key=key, balance=amount, executor=transaction_executor)
+        QLDBHelper.update_balance(sub=user_sub, key=key, balance=amount, executor=transaction_executor)
 
     # Query the table
     qldb_driver.execute_lambda(lambda executor: execute_signup_confirmation(executor))

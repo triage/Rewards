@@ -73,13 +73,13 @@ def redeem():
 
         # update balances for each:
         # user
-        qldb_helper.update_balance(sub=user_sub, key=key, balance=user_balance, executor=transaction_executor)
+        QLDBHelper.update_balance(sub=user_sub, key=key, balance=user_balance, executor=transaction_executor)
 
         # merchant
-        qldb_helper.update_balance(sub=merchant_sub, key=key, balance=merchant_balance, executor=transaction_executor)
+        QLDBHelper.update_balance(sub=merchant_sub, key=key, balance=merchant_balance, executor=transaction_executor)
 
         # insert into a transaction for the user
-        qldb_helper.insert_transaction(values={
+        QLDBHelper.insert_transaction(values={
             "id": "{key}-user".format(key=key),
             "key": key,
             "sub": user_sub,
@@ -89,7 +89,7 @@ def redeem():
         }, executor=transaction_executor)
 
         # insert a transaction for the merchant
-        qldb_helper.insert_transaction(values={
+        QLDBHelper.insert_transaction(values={
             "id": "{key}-merchant".format(key=key),
             "key": key,
             "sub": merchant_sub,

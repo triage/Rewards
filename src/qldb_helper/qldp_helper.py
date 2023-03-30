@@ -17,7 +17,7 @@ class UpdateBalanceError(QLDBError):
         super().__init__(f'Error updating into balances - exception:{exception}')
 
 
-class qldb_helper:
+class QLDBHelper:
     @classmethod
     def insert_transaction(cls, values: object, executor: object):
         """
