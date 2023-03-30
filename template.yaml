@@ -6,7 +6,7 @@ Globals:
   Function:
     Timeout: 5
     MemorySize: 128
-    Runtime: python3.11.2
+    Runtime: python3.9
     Tracing: Active
     Environment:
       Variables:
@@ -217,7 +217,7 @@ Resources:
     Properties:
       CodeUri: ./src/issuer/pre-signup/user
       Handler: app.lambda_handler
-      Runtime: python3.11.2
+      Runtime: python3.9
       Layers:
         - !Ref QLDBHelperLayer
       Policies:
@@ -240,7 +240,7 @@ Resources:
     Properties:
       CodeUri: ./src/issuer/pre-signup/merchant
       Handler: app.lambda_handler
-      Runtime: python3.11.2
+      Runtime: python3.9
       Layers:
         - !Ref QLDBHelperLayer
       Policies:
@@ -262,13 +262,13 @@ Resources:
     Type: AWS::Serverless::LayerVersion
     LayerName: 'QLDBHelperLayer'
     CompatibleRuntimes:
-      - python3.11.2
+      - python3.9
     Properties:
       ContentUri: ./src/qldb_helper
       CompatibleRuntimes:
-        - python3.11.2
+        - python3.9
     Metadata:
-      BuildMethod: python3.11.2
+      BuildMethod: python3.9
 Outputs:
   RewardsUserApi:
     Description: "API Gateway - endpoint URL for Prod stage for Rewards functions"
