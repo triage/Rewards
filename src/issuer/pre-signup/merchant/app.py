@@ -8,7 +8,7 @@ from aws_lambda_powertools import Metrics
 from aws_lambda_powertools.metrics import MetricUnit
 from pyqldb.driver.qldb_driver import QldbDriver
 from pyqldb.config.retry_config import RetryConfig
-from qldb_helper import QLDBHelper
+from qldb_helper import qldb_helper
 
 tracer = Tracer()
 logger = Logger()
@@ -30,7 +30,7 @@ def signup_confirmation(event: dict, context: LambdaContext):
 
     def execute_signup_confirmation(transaction_executor):
         # initialize the user
-        QLDBHelper.insert_balance(sub=user_sub, key=f"user-initialize-{user_sub}")
+        qldb_helper.insert_balance(sub=user_sub, key=f"user-initialize-{user_sub}")
 
     # Query the table
     qldb_driver.execute_lambda(lambda executor: execute_signup_confirmation(executor))

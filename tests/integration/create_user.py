@@ -1,7 +1,7 @@
 import boto3
 
 
-class CognitoUser:
+class cognito_user:
 
     def __init__(self, user_pool_id: str, client_id: str, email: str, password: str):
         self.user_pool_id = user_pool_id

@@ -13,7 +13,7 @@ from aws_lambda_powertools.metrics import MetricUnit
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from pyqldb.config.retry_config import RetryConfig
 from pyqldb.driver.qldb_driver import QldbDriver
-from qldb_helper import QLDBHelper
+from qldb_helper import qldb_helper
 
 app = APIGatewayRestResolver()
 tracer = Tracer()
@@ -73,13 +73,13 @@ def redeem():
 
         # update balances for each:
         # user
-        QLDBHelper.update_balance(sub=user_sub, key=key, balance=user_balance, executor=transaction_executor)
+        qldb_helper.update_balance(sub=user_sub, key=key, balance=user_balance, executor=transaction_executor)
 
         # merchant
-        QLDBHelper.update_balance(sub=merchant_sub, key=key, balance=merchant_balance, executor=transaction_executor)
+        qldb_helper.update_balance(sub=merchant_sub, key=key, balance=merchant_balance, executor=transaction_executor)
 
         # insert into a transaction for the user
-        QLDBHelper.insert_transaction(values={
+        qldb_helper.insert_transaction(values={
             "id": "{key}-user".format(key=key),
             "key": key,
             "sub": user_sub,
@@ -89,7 +89,7 @@ def redeem():
         }, executor=transaction_executor)
 
         # insert a transaction for the merchant
-        QLDBHelper.insert_transaction(values={
+        qldb_helper.insert_transaction(values={
             "id": "{key}-merchant".format(key=key),
             "key": key,
             "sub": merchant_sub,

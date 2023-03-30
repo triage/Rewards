@@ -1,3 +1,4 @@
 boto3
 pytest-asyncio
 asyncio
+requests
