@@ -14,6 +14,8 @@ I once interviewed to be engineering leadership at a bank. The systems design in
   - strongly consistent reads and writes
   - append-only, immutable
   - severless, horizontally scalable, handles our expected throughput
+  - [optimistically concurrent](https://docs.aws.amazon.com/qldb/latest/developerguide/concurrency.html)
+  ```Before committing, each transaction performs a validation check to ensure that no other committed transaction has modified the data that it's accessing. If this check reveals conflicting modifications, or the state of the data changes, the committing transaction is rejected. However, the transaction can be restarted.```
 2. Lambda
 3. Cognito user pools
 
