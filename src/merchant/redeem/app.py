@@ -2,7 +2,7 @@ import json
 import os
 
 from aws_lambda_powertools.utilities.idempotency import (
-    DynamoDBPersistenceLayer, idempotent
+    DynamoDBPersistenceLayer, idempotent, idempotent_function, IdempotencyConfig
 )
 from aws_lambda_powertools import Logger
 from aws_lambda_powertools import Metrics
@@ -23,21 +23,25 @@ metrics = Metrics(namespace="Powertools")
 table_name=os.environ.get("IDEMPOTENCY_TABLE_NAME")\
     if os.environ.get("IDEMPOTENCY_TABLE_NAME") is not None else "ledgerstore-dev-IdempotencyTable-8OIO7OUQBFCJ"
 persistence_layer = DynamoDBPersistenceLayer(table_name)
+config =  IdempotencyConfig(
+    event_key_jmespath="key",  # see Choosing a payload subset section
+    use_local_cache=True,
+)
 
 class RedeemError(Exception):
     pass
 
 
-@app.post("/merchant/redeem")
 @tracer.capture_method
-def redeem():
+@idempotent_function(data_keyword_argument="key", config=config, persistence_store=persistence_layer)
+def redeem(event: dict, context: LambdaContext, key: str):
     event = app.current_event
     metrics.add_metric(name="RedeemInvocations", unit=MetricUnit.Count, value=1)
 
     merchant_sub = event["requestContext"]["authorizer"]["claims"]["sub"]
     body = json.loads(event["body"])
-    user_sub, amount, key, merchant_description, user_description = \
-        body["user_sub"], int(body["amount"]), body["key"], body["merchant_description"], body["user_description"]
+    user_sub, amount, merchant_description, user_description = \
+        body["user_sub"], int(body["amount"]), body["merchant_description"], body["user_description"]
 
     retry_config = RetryConfig(retry_limit=3)
     qldb_driver = QldbDriver(ledger_name=os.environ.get("LEDGER_NAME"), retry_config=retry_config)
@@ -109,6 +113,8 @@ def redeem():
 @tracer.capture_lambda_handler
 # ensures metrics are flushed upon request completion/failure and capturing ColdStart metric
 @metrics.log_metrics(capture_cold_start_metric=True)
-@idempotent(persistence_store=persistence_layer)
 def lambda_handler(event: dict, context: LambdaContext) -> dict:
-    return app.resolve(event, context)
+    config.register_lambda_context(context)
+    body = json.loads(event["body"])
+    key = body["key"]
+    return redeem(event=event, context=context, key=key)
