@@ -8,8 +8,8 @@ class cognito_user:
         self.client_id = client_id
         self.email = email
         self.password = password
-        self.authentication_headers: dict = None
-        self.sub: str = None
+        self.authentication_headers: dict
+        self.sub: str
 
     def is_logged_in(self) -> bool:
         return self.authentication_headers is not None

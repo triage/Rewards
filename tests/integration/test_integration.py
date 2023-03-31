@@ -53,12 +53,26 @@ async def test_integration():
     # get balance of user, assert it's equal to the signup bonus
     user_balance = requests.get(API.USER.url("/user/balance"), headers=user.authentication_headers)\
         .json()
-    assert user_balance["balance"] == 0
+    assert user_balance["balance"] == 50000
 
     # redeem from a merchant for an amount
+    # body["user_sub"], int(body["amount"]), body["key"], body["merchant_description"], body["user_description"]
+    key = str(uuid.uuid4())
+    response = requests.post(url=API.MERCHANT.url("/merchant/redeem"),
+                  data={
+                        "user_sub": user.sub,
+                        "amount": 10000,
+                        "key": key,
+                        "merchant_description": f"test to user {user.sub}",
+                        "user_description": "test from merchant"
+                  },
+                  headers=merchant.authentication_headers) \
+        .json()
 
     # assert new balance of user is equal to the signup bonus minus the amount redeemed
-
+    user_balance = requests.get(API.USER.url("/user/balance"), headers=user.authentication_headers)\
+        .json()
+    assert user_balance["balance"] == 40000
 
 
 
