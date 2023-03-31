@@ -8,7 +8,7 @@ from aws_lambda_powertools import Metrics
 from aws_lambda_powertools.metrics import MetricUnit
 from pyqldb.driver.qldb_driver import QldbDriver
 from pyqldb.config.retry_config import RetryConfig
-from qldb_helper import qldb_helper
+from qldb_helper import QLDBHelper
 
 tracer = Tracer()
 logger = Logger()
