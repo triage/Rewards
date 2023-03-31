@@ -16,7 +16,7 @@ metrics = Metrics(namespace="Powertools")
 
 
 @tracer.capture_method
-def signup_confirmation(event: dict):
+def signup_confirmation(event: dict, context: LambdaContext):
     # adding custom metrics
     # See: https://awslabs.github.io/aws-lambda-powertools-python/latest/core/metrics/
     metrics.add_metric(name="SignupConfirmationInvocations", unit=MetricUnit.Count, value=1)
