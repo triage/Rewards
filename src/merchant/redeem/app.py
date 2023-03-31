@@ -115,6 +115,7 @@ def redeem(event: dict, context: LambdaContext, key: str):
 @metrics.log_metrics(capture_cold_start_metric=True)
 def lambda_handler(event: dict, context: LambdaContext) -> dict:
     config.register_lambda_context(context)
+    logger.info(event)
     body = json.loads(event["body"])
     key = body["key"]
     return redeem(event=event, context=context, key=key)
