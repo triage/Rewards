@@ -26,7 +26,6 @@ class API(Enum):
 
 @pytest.mark.asyncio
 async def test_integration():
-
     # create a merchant
     merchant_pool_id = "us-east-1_2GdINgnSJ"  # merchant pool
     merchant_client_id = "4mn3rkpjkn0qgqqgpj11tjdtgd"
@@ -34,7 +33,7 @@ async def test_integration():
         user_pool_id=merchant_pool_id, client_id=merchant_client_id, email=generate_test_email(), password="password123"
     )
     await merchant.create_user_and_login()
-    assert(merchant.is_logged_in() is True)
+    assert (merchant.is_logged_in() is True)
 
     # create a user
     user_pool_id = "us-east-1_1KWE8lEIA"  # user pool
@@ -46,33 +45,31 @@ async def test_integration():
     assert user.is_logged_in() is True
 
     # get balance of merchant, assert it's 0
-    merchant_balance = requests.get(API.MERCHANT.url("/merchant/balance"), headers=merchant.authentication_headers)\
+    merchant_balance = requests.get(API.MERCHANT.url("/merchant/balance"), headers=merchant.authentication_headers) \
         .json()
     assert merchant_balance["balance"] == 0
 
     # get balance of user, assert it's equal to the signup bonus
-    user_balance = requests.get(API.USER.url("/user/balance"), headers=user.authentication_headers)\
+    user_balance = requests.get(API.USER.url("/user/balance"), headers=user.authentication_headers) \
         .json()
     assert user_balance["balance"] == 50000
 
     # redeem from a merchant for an amount
     # body["user_sub"], int(body["amount"]), body["key"], body["merchant_description"], body["user_description"]
     key = str(uuid.uuid4())
+
     response = requests.post(url=API.MERCHANT.url("/merchant/redeem"),
-                  data={
-                        "user_sub": user.sub,
-                        "amount": 10000,
-                        "key": key,
-                        "merchant_description": f"test to user {user.sub}",
-                        "user_description": "test from merchant"
-                  },
-                  headers=merchant.authentication_headers) \
+                             json={
+                                 "user_sub": user.sub,
+                                 "amount": 10000,
+                                 "key": key,
+                                 "merchant_description": f"test to user {user.sub}",
+                                 "user_description": "test from merchant"
+                             },
+                             headers=merchant.authentication_headers) \
         .json()
 
     # assert new balance of user is equal to the signup bonus minus the amount redeemed
-    user_balance = requests.get(API.USER.url("/user/balance"), headers=user.authentication_headers)\
+    user_balance = requests.get(API.USER.url("/user/balance"), headers=user.authentication_headers) \
         .json()
     assert user_balance["balance"] == 40000
-
-
-
