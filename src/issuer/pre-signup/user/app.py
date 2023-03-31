@@ -26,7 +26,7 @@ def signup_confirmation(event: dict, context: LambdaContext):
     logger.info("LedgerStore API - issuer/pre-signup/user HTTP 200")
     logger.info("request: {request}", request=event.get("request"))
     logger.info("event: {event}", event=event)
-    user_sub = event.get("request.userAttributes.sub")
+    user_sub = event.get("userName")
     retry_config = RetryConfig(retry_limit=3)
     qldb_driver = QldbDriver(ledger_name=os.environ.get("LEDGER_NAME"), retry_config=retry_config)
     amount = int(os.environ.get("USER_SIGNUP_REWARD"))
