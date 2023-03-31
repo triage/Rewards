@@ -6,8 +6,8 @@ I once interviewed to be engineering leadership at a bank. The systems design in
 ## Requirements:
 1. Prevent double-spends (User shouldn't be able to spend more than they have).
 2. Populate customer's account with rewards points on creation
-3. Allow partners to authorize redemption of points
-4. Allow customers and partners to see their balances
+3. Allow merchants to authorize redemption of points
+4. Allow customers and merchants to see their balances
 
 ## Choices:
 1. [AWS Quantum Ledger](https://aws.amazon.com/qldb/) for the ledger
@@ -15,9 +15,9 @@ I once interviewed to be engineering leadership at a bank. The systems design in
   - append-only, immutable
   - severless, horizontally scalable, handles our expected throughput
   - [optimistically concurrent](https://docs.aws.amazon.com/qldb/latest/developerguide/concurrency.html)
-  ```Before committing, each transaction performs a validation check to ensure that no other committed transaction has modified the data that it's accessing. If this check reveals conflicting modifications, or the state of the data changes, the committing transaction is rejected. However, the transaction can be restarted.```
-2. Lambda
+2. Lambda / SAM
 3. Cognito user pools
+4. Double-entry accounting
 
 ## Preventing double-spends:
 1. [AWS Lambda Powertools for Python](https://awslabs.github.io/aws-lambda-powertools-python/2.9.1/utilities/idempotency/) - Idempotency control
