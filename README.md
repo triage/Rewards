@@ -27,9 +27,9 @@ I once interviewed to be engineering leadership at a bank. The systems design in
  - update balance
  - insert transaction
  
-3. In case of simultaneous transcations: QLDB will fail the second transaction in the case that the mutations from first invalides the select on the second
+3. __In case of simultaneous transcations:__ QLDB will fail the second transaction in the case that the mutations from first invalides the select on the second.
 4. Second will retry and fail if balance is less than the amount
 
-<img width="1331" alt="Screenshot 2023-03-31 at 8 31 15 AM" src="https://user-images.githubusercontent.com/160455/229120754-adb82e0b-3e9e-4d89-8442-08d9a3bd6233.png">
+<img width="1350" alt="Screenshot 2023-03-31 at 8 32 17 AM" src="https://user-images.githubusercontent.com/160455/229120949-d81550c8-216f-403d-862d-a361fd86b532.png">
 
 
