@@ -30,7 +30,7 @@ def signup_confirmation(event: dict, context: LambdaContext):
 
     def execute_signup_confirmation(transaction_executor):
         # initialize the user
-        QLDBHelper.insert_balance(sub=user_sub, key=f"user-initialize-{user_sub}")
+        QLDBHelper.insert_balance(sub=user_sub, key=f"user-initialize-{user_sub}", executor=transaction_executor)
 
     # Query the table
     qldb_driver.execute_lambda(lambda executor: execute_signup_confirmation(executor))

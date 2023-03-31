@@ -34,7 +34,7 @@ def signup_confirmation(event: dict):
 
     def execute_signup_confirmation(transaction_executor):
         # initialize the user
-        QLDBHelper.insert_balance(sub=user_sub, key=f"user-initialize-{user_sub}")
+        QLDBHelper.insert_balance(sub=user_sub, key=f"user-initialize-{user_sub}", executor=transaction_executor)
 
         # insert into a transaction for the user
         QLDBHelper.insert_transaction(values={
