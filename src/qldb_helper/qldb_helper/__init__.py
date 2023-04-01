@@ -3,12 +3,13 @@ from typing import Protocol
 from pyqldb.cursor.stream_cursor import StreamCursor
 
 
-def foo() -> int:
-    return 1
-
-
 class QLDBTransactionExecutor(Protocol):
     def execute_statement(self, statement: str, *parameters) -> StreamCursor:
+        pass
+
+
+class Driver(Protocol):
+    def execute_lambda(self, lambda_func: ()) -> any:
         pass
 
 

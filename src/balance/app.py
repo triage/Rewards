@@ -9,7 +9,7 @@ from aws_lambda_powertools import Metrics
 from aws_lambda_powertools.metrics import MetricUnit
 from pyqldb.driver.qldb_driver import QldbDriver
 from pyqldb.config.retry_config import RetryConfig
-from qldb_helper import QLDBHelper
+from qldb_helper.qldb_helper import QLDBHelper, Driver
 
 app = APIGatewayRestResolver()
 tracer = Tracer()
@@ -17,10 +17,8 @@ logger = Logger()
 metrics = Metrics(namespace="Powertools")
 
 
-@app.get("/user/balance")
-@app.get("/merchant/balance")
 @tracer.capture_method
-def get_balance(qldb_driver: QldbDriver = None, event: APIGatewayRestResolver = None):
+def get_balance(qldb_driver: Driver = None, event: APIGatewayRestResolver = None, context: LambdaContext = None):
     if not event:
         event = app.current_event
     # adding custom metrics

@@ -1,8 +1,38 @@
 import json
 import os
+from unittest.mock import Mock, MagicMock
 import pytest
-
+from pyqldb.communication.session_client import SessionClient
+from pyqldb.cursor.stream_cursor import StreamCursor
 from src.balance import app
+from src.qldb_helper.qldb_helper import Driver
+
+class MockExecutor:
+    def __init__(self, responses: dict):
+        self.responses = responses
+
+    def execute_statement(self, statement: str, *parameters) -> StreamCursor:
+        formatted_query = statement.replace('?', '%s') % parameters
+        statement_result = self.responses[formatted_query]
+
+        # create a mock cursor object
+        cursor_mock = MagicMock()
+
+        # define the return values for the cursor's __next__ method
+        cursor_mock.__next__.side_effect = [statement_result, StopIteration]
+
+        return cursor_mock
+
+
+class MockQLDBDriver(Driver):
+    def __init__(self, responses: dict):
+        self.responses = responses
+        self.session = Mock(spec=SessionClient)
+        self.executor = MockExecutor(responses)
+
+    def execute_lambda(self, lambda_func: (MockExecutor)) -> any:
+        return lambda_func(self.executor)
+
 
 def lambda_context():
     class LambdaContext:
@@ -17,6 +47,7 @@ def lambda_context():
              return 1000
 
     return LambdaContext()
+
 
 @pytest.fixture()
 def apigw_event():
@@ -139,10 +170,9 @@ def apigw_event():
 
 
 def test_balance(apigw_event):
-    ret = app.lambda_handler(apigw_event, lambda_context())
-    data = json.loads(ret["body"])
+    response = app.get_balance(qldb_driver=MockQLDBDriver(responses={
+        "SELECT balance from balances WHERE sub = test-user-50000": {"balance": 50000},
+    }), event=apigw_event, context=lambda_context())
 
-    assert ret["statusCode"] == 200
-    assert "balance" in ret["body"]
-    assert data["balance"] == 50000
-    assert data["sub"] == "test-user-50000"
+    assert response["balance"] == 50000
+    assert response["sub"] == "test-user-50000"
