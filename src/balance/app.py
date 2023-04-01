@@ -9,6 +9,7 @@ from aws_lambda_powertools import Metrics
 from aws_lambda_powertools.metrics import MetricUnit
 from pyqldb.driver.qldb_driver import QldbDriver
 from pyqldb.config.retry_config import RetryConfig
+from qldb_helper import QLDBHelper
 
 app = APIGatewayRestResolver()
 tracer = Tracer()
@@ -36,16 +37,7 @@ def get_balance(qldb_driver: QldbDriver = None, event: APIGatewayRestResolver = 
         qldb_driver = QldbDriver(ledger_name=os.environ.get("LEDGER_NAME"), retry_config=retry_config)
 
     def read_documents(transaction_executor):
-        logger.info("Querying the table on db: {db}".format(db=os.environ.get("LEDGER_NAME")))
-        try:
-            cursor = transaction_executor.execute_statement("SELECT balance from balances WHERE sub = ?", sub)
-            first_record = next(cursor, None)
-            if first_record:
-                return first_record["balance"]
-            else:
-                return 0
-        except Exception as e:
-            raise e
+        return QLDBHelper.get_balance(sub=sub, executor=transaction_executor)
 
     # Query the table
     balance = qldb_driver.execute_lambda(lambda executor: read_documents(executor))

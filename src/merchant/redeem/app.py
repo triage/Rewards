@@ -49,19 +49,9 @@ def redeem(event: dict, context: LambdaContext):
         return transaction_amount <= balance
 
     def execute_transaction(transaction_executor):
-        def get_balance_for_sub(sub) -> int:
-            try:
-                cursor = transaction_executor.execute_statement("SELECT balance from balances WHERE sub = ?", sub)
-                first_record = next(cursor, None)
-                if first_record:
-                    return first_record["balance"]
-                else:
-                    raise RedeemError(f"User does not exist:{sub}")
-            except Exception as e:
-                raise e
 
-        merchant_balance = get_balance_for_sub(merchant_sub)
-        user_balance = get_balance_for_sub(user_sub)
+        merchant_balance = QLDBHelper.get_balance(sub=merchant_sub, executor=transaction_executor)
+        user_balance = QLDBHelper.get_balance(sub=user_sub, executor=transaction_executor)
 
         if not transaction_should_approve(balance=user_balance, transaction_amount=amount):
             raise RedeemError("Insufficient balance")
