@@ -1,7 +1,7 @@
 import pytest
 
 from tests.qldb_mock import MockQLDBDriver
-from src.qldb_helper.qldb_helper import QLDBHelper
+from qldb_helper import QLDBHelper
 
 
 def mock_qldb_driver(responses: dict):
