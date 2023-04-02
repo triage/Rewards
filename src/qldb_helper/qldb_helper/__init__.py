@@ -35,7 +35,7 @@ class QLDBHelper:
     @classmethod
     def get_balance(cls, sub: str, executor: QLDBTransactionExecutor) -> int:
         try:
-            cursor = executor.execute_statement("SELECT balance from balances WHERE sub = ?", sub)
+            cursor = executor.execute_statement("SELECT balance FROM balances WHERE sub = ?", sub)
             first_record = next(cursor, None)
             if first_record:
                 return first_record["balance"]
@@ -92,7 +92,7 @@ class QLDBHelper:
 
         """
         # This is critical to make this transaction idempotent
-        cursor = executor.execute_statement("SELECT * FROM balances WHERE id = ?", sub)
+        cursor = executor.execute_statement("SELECT balance FROM balances WHERE sub = ?", sub)
         # Check if there is any record in the cursor
         first_record = next(cursor, None)
 
