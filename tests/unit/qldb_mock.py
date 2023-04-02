@@ -30,5 +30,5 @@ class MockQLDBDriver(Driver):
         self.session = Mock(spec=SessionClient)
         self.executor = MockExecutor(responses)
 
-    def execute_lambda(self, lambda_func: (MockExecutor)) -> any:
+    def execute_lambda(self, lambda_func: any) -> any:
         return lambda_func(self.executor)

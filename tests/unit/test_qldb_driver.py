@@ -3,27 +3,30 @@ import unittest
 import pytest
 
 from tests.unit.test_balance import MockQLDBDriver
+from src.qldb_helper.qldb_helper import QLDBHelper
 
 
-@pytest.fixture
 def mock_qldb_driver(responses: dict):
     return MockQLDBDriver(responses=responses)
 
 
 @pytest.fixture
-def mock_insert():
-    return {
-        'INSERT INTO balances (sub, balance) VALUES ("abc123", 10000)': {"inserted": True}
-    }
+def mock_qldb_driver_insert():
+    return mock_qldb_driver(responses={
+        'SELECT * FROM balances WHERE id = sub': None,
+        "INSERT INTO balances VALUE {'key': 'key', 'balance': 0, 'sub': 'sub'}": None
+    })
 
 
-class QLDBDriverTestCase(unittest.TestCase):
-    def test_insert(self, mock_qldb_driver):
+class TestQLDBDriver:
+    def test_insert_balance(self, mock_qldb_driver_insert):
+        QLDBHelper.insert_balance(sub="sub", key="key", executor=mock_qldb_driver_insert.executor)
+        assert(
+                mock_qldb_driver_insert.executor.queries[0] == "SELECT * FROM balances WHERE id = sub"
+        )
 
+        assert(
+                mock_qldb_driver_insert.executor.queries[1] ==
+                "INSERT INTO balances VALUE {'key': 'key', 'balance': 0, 'sub': 'sub'}"
+        )
 
-
-        self.assertEqual(True, False)  # add assertion here
-
-
-if __name__ == '__main__':
-    unittest.main()

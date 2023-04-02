@@ -21,14 +21,9 @@ metrics = Metrics(namespace="Powertools")
 def get_balance(event: APIGatewayRestResolver = None, context: LambdaContext = None, qldb_driver: Driver = None):
     if not event:
         event = app.current_event
-    # adding custom metrics
-    # See: https://awslabs.github.io/aws-lambda-powertools-python/latest/core/metrics/
+
     metrics.add_metric(name="BalanceInvocations", unit=MetricUnit.Count, value=1)
 
-    # structured log
-    # See: https://awslabs.github.io/aws-lambda-powertools-python/latest/core/logger/
-    logger.info("LedgerStore API - /balance HTTP 200")
-    logger.info("event: {event}", event=event)
     sub = event["requestContext"]["authorizer"]["claims"]["sub"]
 
     if not qldb_driver:
