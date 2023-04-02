@@ -18,7 +18,7 @@ metrics = Metrics(namespace="Powertools")
 
 
 @tracer.capture_method
-def get_balance(qldb_driver: Driver = None, event: APIGatewayRestResolver = None, context: LambdaContext = None):
+def get_balance(event: APIGatewayRestResolver = None, context: LambdaContext = None, qldb_driver: Driver = None):
     if not event:
         event = app.current_event
     # adding custom metrics
@@ -30,9 +30,12 @@ def get_balance(qldb_driver: Driver = None, event: APIGatewayRestResolver = None
     logger.info("LedgerStore API - /balance HTTP 200")
     logger.info("event: {event}", event=event)
     sub = event["requestContext"]["authorizer"]["claims"]["sub"]
-    retry_config = RetryConfig(retry_limit=3)
+
     if not qldb_driver:
-        qldb_driver = QldbDriver(ledger_name=os.environ.get("LEDGER_NAME"), retry_config=retry_config)
+        qldb_driver = QldbDriver(
+            ledger_name=os.environ.get("LEDGER_NAME"),
+            retry_config=RetryConfig(retry_limit=3)
+        )
 
     def read_documents(transaction_executor):
         return QLDBHelper.get_balance(sub=sub, executor=transaction_executor)
@@ -51,4 +54,4 @@ def get_balance(qldb_driver: Driver = None, event: APIGatewayRestResolver = None
 # ensures metrics are flushed upon request completion/failure and capturing ColdStart metric
 @metrics.log_metrics(capture_cold_start_metric=True)
 def lambda_handler(event: dict, context: LambdaContext) -> dict:
-    return app.resolve(event, context)
+    return get_balance(event, context)

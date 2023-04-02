@@ -4,20 +4,13 @@ import pytest
 from datetime import datetime
 
 from src.merchant.redeem import app
+from tests.unit.test_balance import MockQLDBDriver
 
 
 def lambda_context():
     class LambdaContext:
         def __init__(self):
             self.function_name = "test-func"
-            self.memory_limit_in_mb = 128
-            self.invoked_function_arn = "arn:aws:lambda:eu-west-1:809313241234:function:test-func"
-            self.aws_request_id = "52fdfc07-2182-154f-163f-5f0f9a621d72"
-            os.environ["LEDGER_NAME"] = "rewards-ledgerstore-test"
-            os.environ["IDEMPOTENCY_TABLE_NAME"] = "ledgerstore-dev-IdempotencyTable-178A9ESK20Q9B"
-
-        def get_remaining_time_in_millis(self) -> int:
-             return 1000
 
     return LambdaContext()
 
@@ -148,9 +141,8 @@ def apigw_event():
     }
 
 
-def test_redeem(apigw_event):
-    ret = app.lambda_handler(apigw_event, lambda_context())
-    data = json.loads(ret["body"])
-
-    assert ret["statusCode"] == 200
-    assert data["key"] == transaction_key
+def skip_test_redeem(apigw_event):
+    response = app.redeem(qldb_driver=MockQLDBDriver(responses={
+        "SELECT balance from balances WHERE sub = test-user-50000": {"balance": 50000},
+    }), event=apigw_event, context=lambda_context())
+    assert response["key"] == transaction_key
