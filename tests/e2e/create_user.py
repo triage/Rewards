@@ -36,7 +36,7 @@ class CognitoUser:
         self.sub = response['User']['Username']
         return response
 
-    async def __login(self) -> dict:
+    async def __login(self):
         client = boto3.client('cognito-idp', region_name='us-east-1')
         response = client.initiate_auth(
             ClientId=self.client_id,
@@ -50,7 +50,7 @@ class CognitoUser:
         headers = {'Authorization': f'Bearer {token}'}
         self.authentication_headers = headers
 
-    async def __update_password(self) -> dict:
+    async def __update_password(self):
         client = boto3.client('cognito-idp', region_name='us-east-1')
         client.admin_set_user_password(
             UserPoolId=self.user_pool_id,
