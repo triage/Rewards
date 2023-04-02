@@ -3,6 +3,8 @@
 An attempt to create a Rewards program on AWS SAM.
 I once interviewed to be engineering leadership at a bank. The systems design interview was to create a rewards program. I did quite well on the _other_ parts of the virtual on-site. I think I have a much better understanding now about how this could work.
 
+<img width="1350" alt="Screenshot 2023-03-31 at 8 32 17 AM" src="https://user-images.githubusercontent.com/160455/229120949-d81550c8-216f-403d-862d-a361fd86b532.png">
+
 ## Requirements:
 1. Prevent double-spends (User shouldn't be able to spend more than they have).
 2. Populate customer's account with rewards points on creation
@@ -32,6 +34,5 @@ I once interviewed to be engineering leadership at a bank. The systems design in
 3. __In case of simultaneous transcations:__ QLDB will fail the second transaction in the case that the mutations from first invalides the select on the second.
 4. Second will retry and fail if balance is less than the amount
 
-<img width="1350" alt="Screenshot 2023-03-31 at 8 32 17 AM" src="https://user-images.githubusercontent.com/160455/229120949-d81550c8-216f-403d-862d-a361fd86b532.png">
 
 
