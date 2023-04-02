@@ -14,6 +14,7 @@ from aws_lambda_powertools.utilities.typing import LambdaContext
 from pyqldb.config.retry_config import RetryConfig
 from pyqldb.driver.qldb_driver import QldbDriver
 from qldb_helper import QLDBHelper, Driver
+from transaction_approver import transaction_should_approve
 
 app = APIGatewayRestResolver()
 tracer = Tracer()
@@ -43,13 +44,6 @@ def redeem(event: dict, context: LambdaContext, qldb_driver: Driver = None):
             ledger_name=os.environ.get("LEDGER_NAME"),
             retry_config=RetryConfig(retry_limit=3)
         )
-
-    def transaction_should_approve(balance: int, transaction_amount: int):
-        """
-        Return if all the requirements are met which allow this transaction to proceed.
-        For now, this just tracks if the user has sufficient balance
-        """
-        return transaction_amount <= balance
 
     def execute_transaction(transaction_executor):
 

@@ -49,4 +49,4 @@ def get_balance(event: APIGatewayRestResolver = None, context: LambdaContext = N
 # ensures metrics are flushed upon request completion/failure and capturing ColdStart metric
 @metrics.log_metrics(capture_cold_start_metric=True)
 def lambda_handler(event: dict, context: LambdaContext) -> dict:
-    return get_balance(event, context)
+    return get_balance(event=event, context=context)

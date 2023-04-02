@@ -133,7 +133,7 @@ def apigw_event():
 
 def test_balance(apigw_event):
     response = app.get_balance(qldb_driver=MockQLDBDriver(responses={
-        "SELECT balance from balances WHERE sub = test-user-50000": {"balance": 50000},
+        "SELECT balance FROM balances WHERE sub = test-user-50000": {"balance": 50000},
     }), event=apigw_event, context=lambda_context())
 
     assert response["balance"] == 50000
