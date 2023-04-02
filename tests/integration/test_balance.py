@@ -1,22 +1,15 @@
-import json
-import os
 import pytest
-
 from src.balance import app
+from tests.qldb_mock import MockQLDBDriver
+
 
 def lambda_context():
     class LambdaContext:
         def __init__(self):
-            self.function_name = "test-func"
-            self.memory_limit_in_mb = 128
-            self.invoked_function_arn = "arn:aws:lambda:eu-west-1:809313241234:function:test-func"
-            self.aws_request_id = "52fdfc07-2182-154f-163f-5f0f9a621d72"
-            os.environ["LEDGER_NAME"] = 'rewards-ledgerstore-test'
-
-        def get_remaining_time_in_millis(self) -> int:
-             return 1000
+            self.function_name = "test_balance"
 
     return LambdaContext()
+
 
 @pytest.fixture()
 def apigw_event():
@@ -139,10 +132,9 @@ def apigw_event():
 
 
 def test_balance(apigw_event):
-    ret = app.lambda_handler(apigw_event, lambda_context())
-    data = json.loads(ret["body"])
+    response = app.get_balance(qldb_driver=MockQLDBDriver(responses={
+        "SELECT balance FROM balances WHERE sub = test-user-50000": {"balance": 50000},
+    }), event=apigw_event, context=lambda_context())
 
-    assert ret["statusCode"] == 200
-    assert "balance" in ret["body"]
-    assert data["balance"] == 50000
-    assert data["sub"] == "test-user-50000"
+    assert response["balance"] == 50000
+    assert response["sub"] == "test-user-50000"

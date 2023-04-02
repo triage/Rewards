@@ -1,5 +1,16 @@
-def foobar():
-    print("Hello World from Layer")
+from typing import Protocol
+
+from pyqldb.cursor.stream_cursor import StreamCursor
+
+
+class QLDBTransactionExecutor(Protocol):
+    def execute_statement(self, statement: str, *parameters) -> StreamCursor:
+        pass
+
+
+class Driver(Protocol):
+    def execute_lambda(self, lambda_func: ()) -> any:
+        pass
 
 
 class QLDBError(Exception):
@@ -16,9 +27,25 @@ class UpdateBalanceError(QLDBError):
         super().__init__(f'Error updating into balances - exception:{exception}')
 
 
+class GetBalanceError(QLDBError):
+    pass
+
+
 class QLDBHelper:
     @classmethod
-    def insert_transaction(cls, values: object, executor: object):
+    def get_balance(cls, sub: str, executor: QLDBTransactionExecutor) -> int:
+        try:
+            cursor = executor.execute_statement("SELECT balance FROM balances WHERE sub = ?", sub)
+            first_record = next(cursor, None)
+            if first_record:
+                return first_record["balance"]
+            else:
+                raise GetBalanceError(f"Unable to get balance for user:{sub}")
+        except Exception as e:
+            raise e
+
+    @classmethod
+    def insert_transaction(cls, values: dict, executor: QLDBTransactionExecutor):
         """
         :type values: dict
         :param values: a dictionary of the values to insert
@@ -31,10 +58,10 @@ class QLDBHelper:
         :return: id of the inserted record
 
         """
-        id = values.get("id")
-        if not id:
-            raise InsertTransactionError(exception="id is required")
-        cursor = executor.execute_statement("SELECT * FROM transactions WHERE id = ?", id)
+        transaction_id = values.get("id")
+        if not transaction_id:
+            raise InsertTransactionError(Exception("id is required"))
+        cursor = executor.execute_statement("SELECT * FROM transactions WHERE id = ?", transaction_id)
         # Check if there is any record in the cursor
         first_record = next(cursor, None)
 
@@ -50,7 +77,7 @@ class QLDBHelper:
         return id
 
     @classmethod
-    def insert_balance(cls, sub: str, key: str, executor: object):
+    def insert_balance(cls, sub: str, key: str, executor: QLDBTransactionExecutor):
         """
         :type sub: str
         :param sub of the user attempting to change balance for
@@ -64,9 +91,9 @@ class QLDBHelper:
         :raises InsertError: If insert fails
 
         """
-        # Check if doc with GovId:TOYENC486FH exists
         # This is critical to make this transaction idempotent
-        cursor = executor.execute_statement("SELECT * FROM balances WHERE id = ?", sub)
+        print("select: ", executor)
+        cursor = executor.execute_statement("SELECT balance FROM balances WHERE sub = ?", sub)
         # Check if there is any record in the cursor
         first_record = next(cursor, None)
 
@@ -80,6 +107,7 @@ class QLDBHelper:
                 "sub": sub
             }
             try:
+                print("insert: ", executor)
                 statement = f"INSERT INTO balances VALUE ?"
                 executor.execute_statement(statement, values)
             except Exception as exception:
@@ -87,7 +115,7 @@ class QLDBHelper:
         return key
 
     @classmethod
-    def update_balance(cls, sub: str, key: str, balance: int, executor: object):
+    def update_balance(cls, sub: str, key: str, balance: int, executor: QLDBTransactionExecutor):
         """
         :type sub: str
         :param sub of the user attempting to change balance for
@@ -104,6 +132,7 @@ class QLDBHelper:
         :raises UpdateBalanceError: If update fails
 
         """
+        print("update: ", executor)
         try:
             executor.execute_statement("UPDATE balances SET balance = ?, \"key\" = ? WHERE sub = ?", balance, key, sub)
         except Exception as exception:

@@ -13,7 +13,8 @@ from aws_lambda_powertools.metrics import MetricUnit
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from pyqldb.config.retry_config import RetryConfig
 from pyqldb.driver.qldb_driver import QldbDriver
-from qldb_helper import QLDBHelper
+from qldb_helper import QLDBHelper, Driver
+from redeem.transaction_approver import transaction_should_approve
 
 app = APIGatewayRestResolver()
 tracer = Tracer()
@@ -30,7 +31,7 @@ class RedeemError(Exception):
 
 
 @tracer.capture_method
-def redeem(event: dict, context: LambdaContext):
+def redeem(event: dict, context: LambdaContext, qldb_driver: Driver = None):
     metrics.add_metric(name="RedeemInvocations", unit=MetricUnit.Count, value=1)
 
     merchant_sub = event["requestContext"]["authorizer"]["claims"]["sub"]
@@ -38,30 +39,16 @@ def redeem(event: dict, context: LambdaContext):
     user_sub, amount, key, merchant_description, user_description = \
         body["user_sub"], int(body["amount"]), body["key"], body["merchant_description"], body["user_description"]
 
-    retry_config = RetryConfig(retry_limit=3)
-    qldb_driver = QldbDriver(ledger_name=os.environ.get("LEDGER_NAME"), retry_config=retry_config)
-
-    def transaction_should_approve(balance: int, transaction_amount: int):
-        """
-        Return if all the requirements are met which allow this transaction to proceed.
-        For now, this just tracks if the user has sufficient balance
-        """
-        return transaction_amount <= balance
+    if not qldb_driver:
+        qldb_driver = QldbDriver(
+            ledger_name=os.environ.get("LEDGER_NAME"),
+            retry_config=RetryConfig(retry_limit=3)
+        )
 
     def execute_transaction(transaction_executor):
-        def get_balance_for_sub(sub) -> int:
-            try:
-                cursor = transaction_executor.execute_statement("SELECT balance from balances WHERE sub = ?", sub)
-                first_record = next(cursor, None)
-                if first_record:
-                    return first_record["balance"]
-                else:
-                    raise RedeemError(f"User does not exist:{sub}")
-            except Exception as e:
-                raise e
 
-        merchant_balance = get_balance_for_sub(merchant_sub)
-        user_balance = get_balance_for_sub(user_sub)
+        merchant_balance = QLDBHelper.get_balance(sub=merchant_sub, executor=transaction_executor)
+        user_balance = QLDBHelper.get_balance(sub=user_sub, executor=transaction_executor)
 
         if not transaction_should_approve(balance=user_balance, transaction_amount=amount):
             raise RedeemError("Insufficient balance")
@@ -78,7 +65,7 @@ def redeem(event: dict, context: LambdaContext):
 
         # insert into a transaction for the user
         QLDBHelper.insert_transaction(values={
-            "id": "{key}-user".format(key=key),
+            "id": f"{key}-user",
             "key": key,
             "sub": user_sub,
             "merchant_sub": merchant_sub,
@@ -88,7 +75,7 @@ def redeem(event: dict, context: LambdaContext):
 
         # insert a transaction for the merchant
         QLDBHelper.insert_transaction(values={
-            "id": "{key}-merchant".format(key=key),
+            "id": f"{key}-merchant",
             "key": key,
             "sub": merchant_sub,
             "user_sub": user_sub,
