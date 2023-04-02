@@ -30,7 +30,7 @@ def mock_qldb_driver_update_balance():
     })
 
 
-class TestQLDBDriver:
+class TestQLDBHelper:
     def test_insert_balance(self, mock_qldb_driver_insert):
         QLDBHelper.insert_balance(sub="sub", key="key", executor=mock_qldb_driver_insert.executor)
         assert(
