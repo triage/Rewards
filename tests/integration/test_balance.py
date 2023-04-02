@@ -1,6 +1,6 @@
 import pytest
 from src.balance import app
-from tests.unit.qldb_mock import MockQLDBDriver
+from tests.qldb_mock import MockQLDBDriver
 
 
 def lambda_context():

@@ -3,7 +3,7 @@ import uuid
 import pytest
 import requests
 
-from tests.integration.create_user import CognitoUser
+from tests.e2e.create_user import CognitoUser
 
 
 def generate_test_email():

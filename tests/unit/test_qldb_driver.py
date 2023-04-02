@@ -1,8 +1,6 @@
-import unittest
-
 import pytest
 
-from tests.unit.test_balance import MockQLDBDriver
+from tests.qldb_mock import MockQLDBDriver
 from src.qldb_helper.qldb_helper import QLDBHelper
 
 

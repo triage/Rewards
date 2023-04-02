@@ -1,10 +1,8 @@
-import json
-import os
 import pytest
 from datetime import datetime
 
 from src.merchant.redeem import app
-from tests.unit.test_balance import MockQLDBDriver
+from tests.qldb_mock import MockQLDBDriver
 
 
 def lambda_context():
@@ -14,7 +12,9 @@ def lambda_context():
 
     return LambdaContext()
 
+
 transaction_key = f"random-transaction-key{datetime.now().timestamp()}"
+
 
 @pytest.fixture()
 def apigw_event():
