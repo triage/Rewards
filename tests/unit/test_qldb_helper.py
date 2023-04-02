@@ -36,7 +36,6 @@ class TestQLDBHelper:
         assert(
                 mock_qldb_driver_insert.executor.queries[0] == "SELECT balance FROM balances WHERE sub = sub"
         )
-
         assert(
                 mock_qldb_driver_insert.executor.queries[1] ==
                 "INSERT INTO balances VALUE {'key': 'key', 'balance': 0, 'sub': 'sub'}"

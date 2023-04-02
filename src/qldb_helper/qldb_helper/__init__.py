@@ -92,6 +92,7 @@ class QLDBHelper:
 
         """
         # This is critical to make this transaction idempotent
+        print("select: ", executor)
         cursor = executor.execute_statement("SELECT balance FROM balances WHERE sub = ?", sub)
         # Check if there is any record in the cursor
         first_record = next(cursor, None)
@@ -106,6 +107,7 @@ class QLDBHelper:
                 "sub": sub
             }
             try:
+                print("insert: ", executor)
                 statement = f"INSERT INTO balances VALUE ?"
                 executor.execute_statement(statement, values)
             except Exception as exception:
@@ -130,6 +132,7 @@ class QLDBHelper:
         :raises UpdateBalanceError: If update fails
 
         """
+        print("update: ", executor)
         try:
             executor.execute_statement("UPDATE balances SET balance = ?, \"key\" = ? WHERE sub = ?", balance, key, sub)
         except Exception as exception:
