@@ -7,8 +7,7 @@ from pyqldb.cursor.stream_cursor import StreamCursor
 class MockExecutor:
     def __init__(self, responses: dict):
         self.responses = responses
-
-    queries = []
+        self.queries = []
 
     def execute_statement(self, statement: str, *parameters) -> StreamCursor:
         formatted_query = statement.replace('?', '%s') % parameters

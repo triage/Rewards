@@ -11,46 +11,46 @@ def mock_qldb_driver(responses: dict):
 @pytest.fixture
 def mock_qldb_driver_insert():
     return mock_qldb_driver(responses={
-        'SELECT balance FROM balances WHERE sub = sub': None,
-        "INSERT INTO balances VALUE {'key': 'key', 'balance': 0, 'sub': 'sub'}": None
+        'SELECT balance FROM balances WHERE sub = sub_insert': None,
+        "INSERT INTO balances VALUE {'key': 'key', 'balance': 0, 'sub': 'sub_insert'}": None
     })
 
 
 @pytest.fixture
 def mock_qldb_driver_get_balance():
     return mock_qldb_driver(responses={
-        'SELECT balance FROM balances WHERE sub = sub': {"balance": 10}
+        'SELECT balance FROM balances WHERE sub = sub_balance': {"balance": 10}
     })
 
 
 @pytest.fixture
 def mock_qldb_driver_update_balance():
     return mock_qldb_driver(responses={
-        "UPDATE balances SET balance = 10, \"key\" = key WHERE sub = sub": None
+        "UPDATE balances SET balance = 20, \"key\" = key WHERE sub = update_sub": None
     })
 
 
 class TestQLDBHelper:
     def test_insert_balance(self, mock_qldb_driver_insert):
-        QLDBHelper.insert_balance(sub="sub", key="key", executor=mock_qldb_driver_insert.executor)
+        QLDBHelper.insert_balance(sub="sub_insert", key="key", executor=mock_qldb_driver_insert.executor)
         assert(
-                mock_qldb_driver_insert.executor.queries[0] == "SELECT balance FROM balances WHERE sub = sub"
+                mock_qldb_driver_insert.executor.queries[0] == "SELECT balance FROM balances WHERE sub = sub_insert"
         )
         assert(
                 mock_qldb_driver_insert.executor.queries[1] ==
-                "INSERT INTO balances VALUE {'key': 'key', 'balance': 0, 'sub': 'sub'}"
+                "INSERT INTO balances VALUE {'key': 'key', 'balance': 0, 'sub': 'sub_insert'}"
         )
 
     def test_get_balance(self, mock_qldb_driver_get_balance):
-        balance = QLDBHelper.get_balance(sub="sub", executor=mock_qldb_driver_get_balance.executor)
+        balance = QLDBHelper.get_balance(sub="sub_balance", executor=mock_qldb_driver_get_balance.executor)
         assert(
-                mock_qldb_driver_get_balance.executor.queries[0] == "SELECT balance FROM balances WHERE sub = sub"
+                mock_qldb_driver_get_balance.executor.queries[0] == "SELECT balance FROM balances WHERE sub = sub_balance"
         )
         assert balance == 10
 
     def test_update_balance(self, mock_qldb_driver_update_balance):
-        QLDBHelper.update_balance(sub="sub", key="key", balance=10, executor=mock_qldb_driver_update_balance.executor)
+        QLDBHelper.update_balance(sub="update_sub", key="key", balance=20, executor=mock_qldb_driver_update_balance.executor)
         assert(
                 mock_qldb_driver_update_balance.executor.queries[0] ==
-                "UPDATE balances SET balance = 10, \"key\" = key WHERE sub = sub"
+                "UPDATE balances SET balance = 20, \"key\" = key WHERE sub = update_sub"
         )
