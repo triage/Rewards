@@ -40,9 +40,10 @@ jobs:
       - uses: actions/checkout@v3
       - run: |
           # trigger the tests here
-          echo 'Running unit tests'
+          echo 'Running unit and integration tests'
           pip3 install pytest pytest-mock aws_lambda_powertools aws_xray_sdk boto3 pyqldb amazon.ion~=0.9.3 boto3~=1.24.93 botocore~=1.27.93 ionhash~=1.2.1
-          python3 -m pytest tests/*
+          python3 -m pytest tests/unit
+          python3 -m pytest tests/integration
 
   delete-feature:
     if: startsWith(github.event.ref, 'feature') && github.event_name == 'delete'
@@ -202,18 +203,18 @@ jobs:
             --no-fail-on-empty-changeset \
             --role-arn ${TESTING_CLOUDFORMATION_EXECUTION_ROLE}
 
-  integration-test:
+  e2e-test:
     if: github.ref == 'refs/heads/main'
     needs: [deploy-testing]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - run: |
-          # trigger the integration tests here
-
+          # trigger the e2e tests here
+          python3 -m pytest tests/e2e
   deploy-prod:
     if: github.ref == 'refs/heads/main'
-    needs: [integration-test]
+    needs: [e2e-test]
     runs-on: ubuntu-latest
     # Configure GitHub Action Environment to have a manual approval step before deployment to production
     # https://docs.github.com/en/actions/reference/environments
