@@ -211,7 +211,7 @@ jobs:
       - uses: actions/checkout@v3
       - run: |
           # trigger the e2e tests here
-          pip3 install pytest pytest-mock requests boto3
+          pip3 install pytest pytest-mock requests boto3 pytest-asyncio asyncio
           python3 -m pytest tests/e2e
   deploy-prod:
     if: github.ref == 'refs/heads/main'
