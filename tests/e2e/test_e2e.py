@@ -58,7 +58,7 @@ async def test_integration():
     # body["user_sub"], int(body["amount"]), body["key"], body["merchant_description"], body["user_description"]
     key = str(uuid.uuid4())
 
-    response = requests.post(url=API.MERCHANT.url("/merchant/redeem"),
+    requests.post(url=API.MERCHANT.url("/merchant/redeem"),
                              json={
                                  "user_sub": user.sub,
                                  "amount": 10000,
