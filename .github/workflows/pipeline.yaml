@@ -205,23 +205,19 @@ jobs:
             --role-arn ${TESTING_CLOUDFORMATION_EXECUTION_ROLE}
   e2e-test:
     if: github.ref == 'refs/heads/main'
-    needs: [deploy-testing]
     runs-on: ubuntu-latest
+    needs: [deploy-testing]
     steps:
-#      - name: Git clone the repository
-#      - uses: actions/checkout@v3
-      - name: configure aws credentials
       - uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: arn:aws:iam::377861569334:role/Github
           role-session-name: github-e2e-test
-          aws-region: us-east-1
-      - name: Run E2E tests
-        shell: bash
+      - uses: actions/checkout@v3
       - run: |
-          # trigger the e2e tests here
-          # pip3 install pytest pytest-mock requests boto3 pytest-asyncio asyncio
-          # python3 -m pytest tests/e2e
+          # trigger the tests here
+          echo 'Running unit and integration tests'
+          pip3 install pytest pytest-mock requests boto3 pytest-asyncio asyncio
+          python3 -m pytest tests/e2e
   deploy-prod:
     if: github.ref == 'refs/heads/main'
     needs: [e2e-test]
