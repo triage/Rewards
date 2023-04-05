@@ -208,11 +208,13 @@ jobs:
     needs: [deploy-testing]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+#      - name: Git clone the repository
+#      - uses: actions/checkout@v3
+      - name: configure aws credentials
       - uses: aws-actions/configure-aws-credentials@v2
         with:
-          use-installer: true
           role-to-assume: arn:aws:iam::377861569334:role/Github
+          role-session-name: github-e2e-test
           aws-region: us-east-1
       - name: Run E2E tests
         shell: bash
