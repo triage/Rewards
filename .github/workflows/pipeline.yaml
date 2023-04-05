@@ -212,6 +212,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::377861569334:role/Github
           role-session-name: github-e2e-test
+          aws-region: us-east-1
       - uses: actions/checkout@v3
       - run: |
           # trigger the tests here
