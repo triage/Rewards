@@ -31,7 +31,9 @@ env:
   # prod "sam package" and "sam deploy" commands.
   # PROD_IMAGE_REPOSITORY = '0123456789.dkr.ecr.region.amazonaws.com/repository-name'
   PROD_REGION: us-east-1
-
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read  # This is required for actions/checkout
 jobs:
   test:
     if: github.event_name == 'push'
@@ -44,7 +46,6 @@ jobs:
           pip3 install pytest pytest-mock aws_lambda_powertools aws_xray_sdk boto3 pyqldb amazon.ion~=0.9.3 boto3~=1.24.93 botocore~=1.27.93 ionhash~=1.2.1
           python3 -m pytest tests/unit
           python3 -m pytest tests/integration
-
   delete-feature:
     if: startsWith(github.event.ref, 'feature') && github.event_name == 'delete'
     runs-on: ubuntu-latest
@@ -202,13 +203,19 @@ jobs:
             --s3-bucket ${TESTING_ARTIFACTS_BUCKET} \
             --no-fail-on-empty-changeset \
             --role-arn ${TESTING_CLOUDFORMATION_EXECUTION_ROLE}
-
   e2e-test:
     if: github.ref == 'refs/heads/main'
     needs: [deploy-testing]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::377861569334:role/Github
+          aws-region: us-east-1
+      - name: Run E2E tests
+        shell: bash
       - run: |
           # trigger the e2e tests here
           # pip3 install pytest pytest-mock requests boto3 pytest-asyncio asyncio
