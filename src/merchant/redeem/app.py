@@ -4,16 +4,12 @@ import os
 from aws_lambda_powertools.utilities.idempotency import (
     DynamoDBPersistenceLayer, idempotent
 )
-from aws_lambda_powertools import Logger
-from aws_lambda_powertools import Metrics
-from aws_lambda_powertools import Tracer
+from aws_lambda_powertools import Logger, Metrics, Tracer
 from aws_lambda_powertools.event_handler import APIGatewayRestResolver
 from aws_lambda_powertools.logging import correlation_paths
 from aws_lambda_powertools.metrics import MetricUnit
 from aws_lambda_powertools.utilities.typing import LambdaContext
-from pyqldb.config.retry_config import RetryConfig
-from pyqldb.driver.qldb_driver import QldbDriver
-from qldb_helper import QLDBHelper, Driver
+from rewards_dao import RewardsDAO, Driver
 from transaction_approver import transaction_should_approve
 
 app = APIGatewayRestResolver()
@@ -39,16 +35,26 @@ def redeem(event: dict, context: LambdaContext, qldb_driver: Driver = None):
     user_sub, amount, key, merchant_description, user_description = \
         body["user_sub"], int(body["amount"]), body["key"], body["merchant_description"], body["user_description"]
 
-    if not qldb_driver:
-        qldb_driver = QldbDriver(
-            ledger_name=os.environ.get("LEDGER_NAME"),
-            retry_config=RetryConfig(retry_limit=3)
-        )
+    def execute_transaction(dao: RewardsDAO):
+        user_balance = dao.get_balance(sub=user_sub)
 
-    def execute_transaction(transaction_executor):
+        if not transaction_should_approve(balance=user_balance, transaction_amount=amount):
+            raise RedeemError("Insufficient balance")
 
-        merchant_balance = QLDBHelper.get_balance(sub=merchant_sub, executor=transaction_executor)
-        user_balance = QLDBHelper.get_balance(sub=user_sub, executor=transaction_executor)
+        dao.insert_transaction(values={
+            "id": f"{key}-user",
+            "key": key,
+            "sub": user_sub,
+            "merchant_sub": merchant_sub,
+            "amount": -amount,
+            "description": user_description
+        })
+
+        user_balance -= amount
+
+        dao.update_balance(sub=user_sub, key=key, balance=user_balance)
+
+        merchant_balance = dao.get_balance(sub=merchant_sub)
 
         if not transaction_should_approve(balance=user_balance, transaction_amount=amount):
             raise RedeemError("Insufficient balance")
@@ -58,32 +64,32 @@ def redeem(event: dict, context: LambdaContext, qldb_driver: Driver = None):
 
         # update balances for each:
         # user
-        QLDBHelper.update_balance(sub=user_sub, key=key, balance=user_balance, executor=transaction_executor)
+        dao.update_balance(sub=user_sub, key=key, balance=user_balance)
 
         # merchant
-        QLDBHelper.update_balance(sub=merchant_sub, key=key, balance=merchant_balance, executor=transaction_executor)
+        dao.update_balance(sub=merchant_sub, key=key, balance=merchant_balance)
 
         # insert into a transaction for the user
-        QLDBHelper.insert_transaction(values={
+        dao.insert_transaction(values={
             "id": f"{key}-user",
             "key": key,
             "sub": user_sub,
             "merchant_sub": merchant_sub,
             "amount": -amount,
             "description": user_description
-        }, executor=transaction_executor)
+        })
 
         # insert a transaction for the merchant
-        QLDBHelper.insert_transaction(values={
+        dao.insert_transaction(values={
             "id": f"{key}-merchant",
             "key": key,
             "sub": merchant_sub,
             "user_sub": user_sub,
             "amount": amount,
             "description": merchant_description
-        }, executor=transaction_executor)
+        })
 
-    qldb_driver.execute_lambda(lambda executor: execute_transaction(executor))
+    RewardsDAO(driver=qldb_driver).execute_lambda(lambda dao: execute_transaction(dao))
 
     return {"key": key}
 

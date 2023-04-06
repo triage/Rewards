@@ -7,9 +7,7 @@ from aws_lambda_powertools import Logger
 from aws_lambda_powertools import Tracer
 from aws_lambda_powertools import Metrics
 from aws_lambda_powertools.metrics import MetricUnit
-from pyqldb.driver.qldb_driver import QldbDriver
-from pyqldb.config.retry_config import RetryConfig
-from qldb_helper import QLDBHelper, Driver
+from rewards_dao import RewardsDAO, Driver
 
 app = APIGatewayRestResolver()
 tracer = Tracer()
@@ -20,7 +18,9 @@ metrics = Metrics(namespace="Powertools")
 @app.get("/user/balance")
 @app.get("/merchant/balance")
 @tracer.capture_method
-def get_balance(event: APIGatewayRestResolver = None, context: LambdaContext = None, qldb_driver: Driver = None):
+def get_balance(event: APIGatewayRestResolver = None,
+                context: LambdaContext = None,
+                qldb_driver: Driver = None):
     if not event:
         event = app.current_event
 
@@ -28,18 +28,10 @@ def get_balance(event: APIGatewayRestResolver = None, context: LambdaContext = N
 
     sub = event["requestContext"]["authorizer"]["claims"]["sub"]
 
-    if not qldb_driver:
-        qldb_driver = QldbDriver(
-            ledger_name=os.environ.get("LEDGER_NAME"),
-            retry_config=RetryConfig(retry_limit=3)
-        )
+    def execute_transaction(dao: RewardsDAO):
+        return dao.get_balance(sub=sub)
 
-    def read_documents(transaction_executor):
-        return QLDBHelper.get_balance(sub=sub, executor=transaction_executor)
-
-    # Query the table
-    balance = qldb_driver.execute_lambda(lambda executor: read_documents(executor))
-
+    balance = RewardsDAO(driver=qldb_driver).execute_transaction(lambda dao: execute_transaction(dao))
     return {"balance": balance, "sub": sub}
 
 

@@ -2,13 +2,10 @@ import os
 
 from aws_lambda_powertools.utilities.typing import LambdaContext
 from aws_lambda_powertools.logging import correlation_paths
-from aws_lambda_powertools import Logger
-from aws_lambda_powertools import Tracer
-from aws_lambda_powertools import Metrics
+from aws_lambda_powertools import Logger, Tracer, Metrics
 from aws_lambda_powertools.metrics import MetricUnit
 from pyqldb.driver.qldb_driver import QldbDriver
-from pyqldb.config.retry_config import RetryConfig
-from qldb_helper import QLDBHelper
+from rewards_dao import RewardsDAO, Driver
 
 tracer = Tracer()
 logger = Logger()
@@ -16,26 +13,21 @@ metrics = Metrics(namespace="Powertools")
 
 
 @tracer.capture_method
-def signup_confirmation(event: dict, context: LambdaContext):
-    # adding custom metrics
-    # See: https://awslabs.github.io/aws-lambda-powertools-python/latest/core/metrics/
+def signup_confirmation(event: dict, context: LambdaContext, qldb_driver: Driver = None):
     metrics.add_metric(name="SignupConfirmationInvocations", unit=MetricUnit.Count, value=1)
-
-    # structured log
-    # See: https://awslabs.github.io/aws-lambda-powertools-python/latest/core/logger/
-    logger.info("LedgerStore API - issuer/pre-signup/merchant HTTP 200")
-    logger.info("request: {request}", request=event.get("request"))
-    logger.info("event: {event}", event=event)
     user_sub = event.get("userName")
-    retry_config = RetryConfig(retry_limit=3)
-    qldb_driver = QldbDriver(ledger_name=os.environ.get("LEDGER_NAME"), retry_config=retry_config)
 
-    def execute_signup_confirmation(transaction_executor):
+    def execute_signup_confirmation(dao: RewardsDAO):
         # initialize the user
-        QLDBHelper.insert_balance(sub=user_sub, key=f"user-initialize-{user_sub}", executor=transaction_executor)
+        balance = dao.get_balance(sub=user_sub)
+
+        if balance is not None:
+            raise Exception("User already exists")
+
+        dao.insert_balance(sub=user_sub, key=f"user-initialize-{user_sub}")
 
     # Query the table
-    qldb_driver.execute_lambda(lambda executor: execute_signup_confirmation(executor))
+    RewardsDAO(driver=qldb_driver).execute_transaction(lambda dao: execute_signup_confirmation(dao))
 
     # Confirm the user
     event['response']['autoConfirmUser'] = True

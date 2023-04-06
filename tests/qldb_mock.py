@@ -1,5 +1,5 @@
 from unittest.mock import MagicMock, Mock
-from src.qldb_helper.qldb_helper import Driver
+from src.rewards_dao.rewards_dao import Driver
 from pyqldb.communication.session_client import SessionClient
 from pyqldb.cursor.stream_cursor import StreamCursor
 

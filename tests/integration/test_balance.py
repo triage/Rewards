@@ -1,5 +1,5 @@
 import pytest
-from src.balance import app
+from src.balance import app as app_balance
 from tests.qldb_mock import MockQLDBDriver
 
 
@@ -132,7 +132,7 @@ def apigw_event():
 
 
 def test_balance(apigw_event):
-    response = app.get_balance(qldb_driver=MockQLDBDriver(responses={
+    response = app_balance.get_balance(qldb_driver=MockQLDBDriver(responses={
         "SELECT balance FROM balances WHERE sub = test-user-50000": {"balance": 50000},
     }), event=apigw_event, context=lambda_context())
 
