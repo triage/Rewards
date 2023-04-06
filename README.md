@@ -1,8 +1,8 @@
 # Rewards
 
-# Systems Design — Building a Gift Card with Amazon Quantum Ledger (QLDB) and AWS Serverless Application Model (SAM) #
+## Systems Design — Building a Gift Card with Amazon Quantum Ledger (QLDB) and AWS Serverless Application Model (SAM) ##
 
-## Let’s build a bank together! (Or at least, the start of one). ##
+__Let’s build a bank together! (Or at least, the start of one).__
 
 I once interviewed for engineering leadership at a bank. As my IC background is as a mobile and front-end engineer (iOS, React), I was mildly unprepared to answer a backend-oriented systems design challenge, and more specifically, one related to money movement activities. The other parts of the virtual on-site went quite well (haha) relative to the systems design challenge.
 Let’s dig in to how I now think we can solve this challenge:
