@@ -260,11 +260,11 @@ Resources:
               Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/${AWS::StackName}
   QLDBHelperLayer:
     Type: AWS::Serverless::LayerVersion
-    LayerName: 'QLDBHelperLayer'
+    LayerName: 'RewardsDAOLayer'
     CompatibleRuntimes:
       - python3.9
     Properties:
-      ContentUri: ./src/qldb_helper
+      ContentUri: ./src/rewards_dao
       CompatibleRuntimes:
         - python3.9
     Metadata:
