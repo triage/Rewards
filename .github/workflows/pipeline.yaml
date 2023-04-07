@@ -10,30 +10,29 @@ on:
       - 'feature**'
 
 env:
-  PIPELINE_USER_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  PIPELINE_USER_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   SAM_TEMPLATE: template.yaml
-  TESTING_STACK_NAME: ledgerstore-dev
-  TESTING_PIPELINE_EXECUTION_ROLE: arn:aws:iam::377861569334:role/aws-sam-cli-managed-dev-pipe-PipelineExecutionRole-WEOT2AMSVODS
-  TESTING_CLOUDFORMATION_EXECUTION_ROLE: arn:aws:iam::377861569334:role/aws-sam-cli-managed-dev-p-CloudFormationExecutionR-E78KMHD06J2U
-  TESTING_ARTIFACTS_BUCKET: aws-sam-cli-managed-dev-pipeline-artifactsbucket-g114v80aw7cg
+  TESTING_STACK_NAME: rewards-dev
+  TESTING_PIPELINE_EXECUTION_ROLE: arn:aws:iam::377861569334:role/aws-sam-cli-managed-dev-pipe-PipelineExecutionRole-1A7QGTJ7QMBN0
+  TESTING_CLOUDFORMATION_EXECUTION_ROLE: arn:aws:iam::377861569334:role/aws-sam-cli-managed-dev-p-CloudFormationExecutionR-1T53ZWJOZKJKJ
+  TESTING_ARTIFACTS_BUCKET: aws-sam-cli-managed-dev-pipeline-artifactsbucket-f8g3w9j86j2b
   # If there are functions with "Image" PackageType in your template,
   # uncomment the line below and add "--image-repository ${TESTING_IMAGE_REPOSITORY}" to
   # testing "sam package" and "sam deploy" commands.
   # TESTING_IMAGE_REPOSITORY = '0123456789.dkr.ecr.region.amazonaws.com/repository-name'
   TESTING_REGION: us-east-1
-  PROD_STACK_NAME: ledgerstore-prod
-  PROD_PIPELINE_EXECUTION_ROLE: arn:aws:iam::377861569334:role/aws-sam-cli-managed-prod-pip-PipelineExecutionRole-74A2KAENVYT5
-  PROD_CLOUDFORMATION_EXECUTION_ROLE: arn:aws:iam::377861569334:role/aws-sam-cli-managed-prod-CloudFormationExecutionR-WCSOHDLBXZ86
-  PROD_ARTIFACTS_BUCKET: aws-sam-cli-managed-prod-pipeline-artifactsbucket-1nwnma6z8x7j2
+  PROD_STACK_NAME: rewards-prod
+  PROD_PIPELINE_EXECUTION_ROLE: arn:aws:iam::377861569334:role/aws-sam-cli-managed-prod-pip-PipelineExecutionRole-RY3NQTRNAGHH
+  PROD_CLOUDFORMATION_EXECUTION_ROLE: arn:aws:iam::377861569334:role/aws-sam-cli-managed-prod-CloudFormationExecutionR-YZWI4625DP1C
+  PROD_ARTIFACTS_BUCKET: aws-sam-cli-managed-prod-pipeline-artifactsbucket-n1j8q2nw6oqr
   # If there are functions with "Image" PackageType in your template,
   # uncomment the line below and add "--image-repository ${PROD_IMAGE_REPOSITORY}" to
   # prod "sam package" and "sam deploy" commands.
   # PROD_IMAGE_REPOSITORY = '0123456789.dkr.ecr.region.amazonaws.com/repository-name'
   PROD_REGION: us-east-1
+
 permissions:
-  id-token: write # This is required for requesting the JWT
-  contents: read  # This is required for actions/checkout
+  id-token: write
+  contents: read
 jobs:
   test:
     if: github.event_name == 'push'
@@ -41,11 +40,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: |
-          # trigger the tests here
-          echo 'Running unit and integration tests'
           pip3 install pytest pytest-mock aws_lambda_powertools aws_xray_sdk boto3 pyqldb amazon.ion~=0.9.3 boto3~=1.24.93 botocore~=1.27.93 ionhash~=1.2.1
           python3 -m pytest tests/unit
           python3 -m pytest tests/integration
+
   delete-feature:
     if: startsWith(github.event.ref, 'feature') && github.event_name == 'delete'
     runs-on: ubuntu-latest
@@ -58,8 +56,6 @@ jobs:
       - name: Assume the testing pipeline user role
         uses: aws-actions/configure-aws-credentials@v1-node16
         with:
-          aws-access-key-id: ${{ env.PIPELINE_USER_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ env.PIPELINE_USER_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.TESTING_REGION }}
           role-to-assume: ${{ env.TESTING_PIPELINE_EXECUTION_ROLE }}
           role-session-name: testing-packaging
@@ -93,8 +89,6 @@ jobs:
       - name: Assume the testing pipeline user role
         uses: aws-actions/configure-aws-credentials@v1-node16
         with:
-          aws-access-key-id: ${{ env.PIPELINE_USER_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ env.PIPELINE_USER_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.TESTING_REGION }}
           role-to-assume: ${{ env.TESTING_PIPELINE_EXECUTION_ROLE }}
           role-session-name: feature-deployment
@@ -104,7 +98,7 @@ jobs:
       - name: Deploy to feature stack in the testing account
         shell: bash
         run: |
-          sam deploy --stack-name ${TESTING_STACK_NAME} \
+          sam deploy --stack-name $(echo ${GITHUB_REF##*/} | tr -cd '[a-zA-Z0-9-]') \
             --capabilities CAPABILITY_IAM \
             --region ${TESTING_REGION} \
             --s3-bucket ${TESTING_ARTIFACTS_BUCKET} \
@@ -127,8 +121,6 @@ jobs:
       - name: Assume the testing pipeline user role
         uses: aws-actions/configure-aws-credentials@v1-node16
         with:
-          aws-access-key-id: ${{ env.PIPELINE_USER_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ env.PIPELINE_USER_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.TESTING_REGION }}
           role-to-assume: ${{ env.TESTING_PIPELINE_EXECUTION_ROLE }}
           role-session-name: testing-packaging
@@ -150,8 +142,6 @@ jobs:
       - name: Assume the prod pipeline user role
         uses: aws-actions/configure-aws-credentials@v1-node16
         with:
-          aws-access-key-id: ${{ env.PIPELINE_USER_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ env.PIPELINE_USER_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.PROD_REGION }}
           role-to-assume: ${{ env.PROD_PIPELINE_EXECUTION_ROLE }}
           role-session-name: prod-packaging
@@ -186,8 +176,6 @@ jobs:
       - name: Assume the testing pipeline user role
         uses: aws-actions/configure-aws-credentials@v1-node16
         with:
-          aws-access-key-id: ${{ env.PIPELINE_USER_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ env.PIPELINE_USER_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.TESTING_REGION }}
           role-to-assume: ${{ env.TESTING_PIPELINE_EXECUTION_ROLE }}
           role-session-name: testing-deployment
@@ -203,19 +191,15 @@ jobs:
             --s3-bucket ${TESTING_ARTIFACTS_BUCKET} \
             --no-fail-on-empty-changeset \
             --role-arn ${TESTING_CLOUDFORMATION_EXECUTION_ROLE}
+
   e2e-test:
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
     needs: [deploy-testing]
+    runs-on: ubuntu-latest
     steps:
-      - uses: aws-actions/configure-aws-credentials@v2
-        with:
-          role-to-assume: arn:aws:iam::377861569334:role/Github
-          role-session-name: github-e2e-test
-          aws-region: us-east-1
       - uses: actions/checkout@v3
       - run: |
-          # trigger the tests here
+          # trigger the integration tests here
           echo 'Running unit and integration tests'
           pip3 install pytest pytest-mock requests boto3 pytest-asyncio asyncio
           python3 -m pytest tests/e2e
@@ -238,8 +222,6 @@ jobs:
       - name: Assume the prod pipeline user role
         uses: aws-actions/configure-aws-credentials@v1-node16
         with:
-          aws-access-key-id: ${{ env.PIPELINE_USER_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ env.PIPELINE_USER_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.PROD_REGION }}
           role-to-assume: ${{ env.PROD_PIPELINE_EXECUTION_ROLE }}
           role-session-name: prod-deployment
