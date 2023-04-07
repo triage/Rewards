@@ -29,7 +29,7 @@ class CognitoUser:
             ClientId=self.client_id,
             SecretHash=self.__calculate_secret_hash(),
             Username=self.email,
-            Password="temporary_password",
+            Password=self.password,
             UserAttributes=[
                 {
                     'Name': 'email',
@@ -37,7 +37,7 @@ class CognitoUser:
                 },
             ],
         )
-        self.sub = response['User']['Username']
+        self.sub = response['UserSub']
         return response
 
     def __calculate_secret_hash(self) -> str:
@@ -52,7 +52,8 @@ class CognitoUser:
             AuthFlow='USER_PASSWORD_AUTH',
             AuthParameters={
                 'USERNAME': self.email,
-                'PASSWORD': self.password
+                'PASSWORD': self.password,
+                'SECRET_HASH': self.__calculate_secret_hash()
             },
         )
         token = response['AuthenticationResult']['IdToken']

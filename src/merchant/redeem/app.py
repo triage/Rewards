@@ -51,22 +51,11 @@ def redeem(event: dict, context: LambdaContext, qldb_driver: Driver = None):
         })
 
         user_balance -= amount
-
-        dao.update_balance(sub=user_sub, key=key, balance=user_balance)
-
-        merchant_balance = dao.get_balance(sub=merchant_sub)
-
-        if not transaction_should_approve(balance=user_balance, transaction_amount=amount):
-            raise RedeemError("Insufficient balance")
-
-        user_balance -= amount
-        merchant_balance += amount
-
-        # update balances for each:
-        # user
         dao.update_balance(sub=user_sub, key=key, balance=user_balance)
 
         # merchant
+        merchant_balance = dao.get_balance(sub=merchant_sub)
+        merchant_balance += amount
         dao.update_balance(sub=merchant_sub, key=key, balance=merchant_balance)
 
         # insert into a transaction for the user
@@ -89,7 +78,7 @@ def redeem(event: dict, context: LambdaContext, qldb_driver: Driver = None):
             "description": merchant_description
         })
 
-    RewardsDAO(driver=qldb_driver).execute_lambda(lambda dao: execute_transaction(dao))
+    RewardsDAO(driver=qldb_driver).execute_transaction(lambda dao: execute_transaction(dao))
 
     return {"key": key}
 

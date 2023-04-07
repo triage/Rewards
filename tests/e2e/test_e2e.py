@@ -18,9 +18,9 @@ class API(Enum):
 
     def url(self, path: str):
         if self == API.USER:
-            return f"https://rtabkvdg1f.execute-api.us-east-1.amazonaws.com/Prod{path}"
+            return f"https://wcmn5hw829.execute-api.us-east-1.amazonaws.com/Prod{path}"
         elif self == API.MERCHANT:
-            return f"https://opuzgns4yi.execute-api.us-east-1.amazonaws.com/Prod{path}"
+            return f"https://5rzmax1r7k.execute-api.us-east-1.amazonaws.com/Prod{path}"
         else:
             raise ValueError("Invalid APIType")
 
