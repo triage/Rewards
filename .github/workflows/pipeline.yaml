@@ -10,6 +10,8 @@ on:
       - 'feature**'
 
 env:
+  MERCHANT_CLIENT_SECRET: ${{secrets.MERCHANT_CLIENT_SECRET}}
+  USER_CLIENT_SECRET: ${{secrets.USER_CLIENT_SECRET}}
   SAM_TEMPLATE: template.yaml
   TESTING_STACK_NAME: rewards-dev
   TESTING_PIPELINE_EXECUTION_ROLE: arn:aws:iam::377861569334:role/aws-sam-cli-managed-dev-pipe-PipelineExecutionRole-1A7QGTJ7QMBN0
