@@ -34,6 +34,10 @@ class GetBalanceError(QLDBError):
     pass
 
 
+class RewardsDAOError(QLDBError):
+    pass
+
+
 class RewardsDAO:
 
     executor: any
@@ -82,7 +86,7 @@ class RewardsDAO:
 
         if first_record:
             # Record already exists, no need to insert
-            pass
+            raise RewardsDAOError(f"Transaction already exists for id:{transaction_id}")
         else:
             try:
                 statement = f"INSERT INTO transactions VALUE ?"
