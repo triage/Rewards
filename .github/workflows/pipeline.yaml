@@ -197,6 +197,15 @@ jobs:
     needs: [deploy-testing]
     runs-on: ubuntu-latest
     steps:
+      - name: Assume the test pipeline user role
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-region: ${{ env.TESTING_REGION }}
+          role-to-assume: ${{ env.TESTING_PIPELINE_EXECUTION_ROLE }}
+          role-session-name: e2e-test
+          role-duration-seconds: 3600
+          role-skip-session-tagging: true
+
       - uses: actions/checkout@v3
       - run: |
           # trigger the integration tests here
