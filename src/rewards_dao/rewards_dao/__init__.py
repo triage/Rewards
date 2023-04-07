@@ -16,25 +16,19 @@ class Driver(Protocol):
         pass
 
 
-class QLDBError(Exception):
+class RewardsDAOError(Exception):
     pass
 
 
-class InsertTransactionError(QLDBError):
-    def __init__(self, exception: Exception):
-        super().__init__(f'Error inserting into transactions exception:{exception}')
-
-
-class UpdateBalanceError(QLDBError):
-    def __init__(self, exception: Exception):
-        super().__init__(f'Error updating into balances - exception:{exception}')
-
-
-class GetBalanceError(QLDBError):
+class InsertTransactionError(RewardsDAOError):
     pass
 
 
-class RewardsDAOError(QLDBError):
+class UpdateBalanceError(RewardsDAOError):
+    pass
+
+
+class GetBalanceError(RewardsDAOError):
     pass
 
 
@@ -63,7 +57,7 @@ class RewardsDAO:
             if first_record:
                 return first_record["balance"]
             else:
-                raise GetBalanceError(f"Unable to get balance for user:{sub}")
+                raise GetBalanceError(exception=Exception(f"Unable to get balance for user:{sub}"))
         except Exception as e:
             raise e
 
@@ -79,14 +73,14 @@ class RewardsDAO:
         """
         transaction_id = values.get("id")
         if not transaction_id:
-            raise InsertTransactionError(Exception("id is required"))
+            raise InsertTransactionError(exception=Exception("id is required"))
         cursor = self.executor.execute_statement("SELECT * FROM transactions WHERE id = ?", transaction_id)
         # Check if there is any record in the cursor
         first_record = next(cursor, None)
 
         if first_record:
             # Record already exists, no need to insert
-            raise RewardsDAOError(f"Transaction already exists for id:{transaction_id}")
+            raise InsertTransactionError(exception=Exception(f"Transaction already exists for id:{transaction_id}"))
         else:
             try:
                 statement = f"INSERT INTO transactions VALUE ?"
