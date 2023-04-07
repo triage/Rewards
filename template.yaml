@@ -1,0 +1,282 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  ledgerstore
+Globals:
+  Function:
+    Timeout: 5
+    MemorySize: 128
+    Runtime: python3.9
+    Tracing: Active
+    Environment:
+      Variables:
+        LEDGER_NAME: !Ref "AWS::StackName"
+        AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
+        USER_SIGNUP_REWARD: 50000
+        IDEMPOTENCY_TABLE_NAME: !Ref IdempotencyTable
+  Api:
+    TracingEnabled: True
+Resources:
+  IdempotencyTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: expiration
+        Enabled: true
+      BillingMode: PAY_PER_REQUEST
+  RedeemFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
+    Properties:
+      Handler: app.lambda_handler
+      CodeUri: ./src/merchant/redeem
+      Layers:
+        - !Ref QLDBHelperLayer
+      Description: Redeem function
+      Architectures:
+        - x86_64
+      Tracing: Active
+      Events:
+        MerchantApi:
+          Type: Api
+          Properties:
+            Path: /merchant/redeem
+            Method: POST
+            RestApiId: !Ref MerchantApi
+            RequestModel:
+              ValidateBody: true
+              Required: true
+              Model: RedeemRequestModel
+        # Powertools env vars: https://awslabs.github.io/aws-lambda-powertools-python/#environment-variables
+      Environment:
+        Variables:
+          POWERTOOLS_SERVICE_NAME: PowertoolsBalance
+          POWERTOOLS_METRICS_NAMESPACE: Powertools
+          LOG_LEVEL: INFO
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref IdempotencyTable
+        - AmazonQLDBFullAccess
+        - AWSLambdaBasicExecutionRole
+        - Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - qldb:SendCommand
+              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/${AWS::StackName}
+            - Effect: Allow
+              Action:
+                - qldb:PartiQLSelect
+              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/${AWS::StackName}
+      Tags:
+        LambdaPowertools: python
+  BalanceFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
+    Properties:
+      Handler: app.lambda_handler
+      CodeUri: ./src/balance
+      Layers:
+        - !Ref QLDBHelperLayer
+      Description: Balance function
+      Architectures:
+        - x86_64
+      Tracing: Active
+      Events:
+        RewardsUserApi:
+          Type: Api
+          Properties:
+            Path: /user/balance
+            Method: GET
+            RestApiId: !Ref UserApi
+        RewardsMerchantApi:
+          Type: Api
+          Properties:
+            Path: /merchant/balance
+            Method: GET
+            RestApiId: !Ref MerchantApi
+        # Powertools env vars: https://awslabs.github.io/aws-lambda-powertools-python/#environment-variables
+      Environment:
+        Variables:
+          POWERTOOLS_SERVICE_NAME: PowertoolsBalance
+          POWERTOOLS_METRICS_NAMESPACE: Powertools
+          LOG_LEVEL: INFO
+      Policies:
+        - AmazonQLDBFullAccess
+        - AWSLambdaBasicExecutionRole
+        - Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - qldb:SendCommand
+              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/${AWS::StackName}
+            - Effect: Allow
+              Action:
+                - qldb:PartiQLSelect
+              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/${AWS::StackName}
+      Tags:
+        LambdaPowertools: python
+  MyCognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Join [ '-', [ 'rewards-user-pool' , Ref: "AWS::StackName" ]]
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+      UsernameAttributes:
+        - email
+      Schema:
+        - AttributeDataType: String
+          Name: email
+          Required: false
+      LambdaConfig:
+        PreSignUp: !GetAtt 'MyPreSignUpUserConfirmationLambda.Arn'
+  MyCognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref MyCognitoUserPool
+      GenerateSecret: false
+  MyCognitoMerchantPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Join [ '-', [ 'rewards-merchant-pool' , Ref: "AWS::StackName" ]]
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+      UsernameAttributes:
+        - email
+      Schema:
+        - AttributeDataType: String
+          Name: email
+          Required: false
+        - AttributeDataType: String
+          Name: company
+          Required: false
+      LambdaConfig:
+        PreSignUp: !GetAtt 'MyPreSignUpMerchantConfirmationLambda.Arn'
+  MyCognitoMerchantPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref MyCognitoMerchantPool
+      GenerateSecret: false
+  MyUserPoolPreSignUpPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt MyPreSignUpUserConfirmationLambda.Arn
+      Principal: cognito-idp.amazonaws.com
+      SourceArn: !Sub "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${MyCognitoUserPool}"
+  MyMerchantPoolPreSignUpPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt MyPreSignUpMerchantConfirmationLambda.Arn
+      Principal: cognito-idp.amazonaws.com
+      SourceArn: !Sub "arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${MyCognitoMerchantPool}"
+  UserApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Name: !Join [ '-', [ 'rewards-user-api' , Ref: "AWS::StackName" ]]
+      Cors: "'*'"
+      Auth:
+        DefaultAuthorizer: MyCognitoUserAuthorizer
+        Authorizers:
+          MyCognitoUserAuthorizer:
+            UserPoolArn: !GetAtt MyCognitoUserPool.Arn
+  MerchantApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Name: !Join [ '-', [ 'rewards-merchant-api' , Ref: "AWS::StackName" ]]
+      Cors: "'*'"
+      Auth:
+        DefaultAuthorizer: MyCognitoMerchantAuthorizer
+        Authorizers:
+          MyCognitoMerchantAuthorizer:
+            UserPoolArn: !GetAtt MyCognitoMerchantPool.Arn
+      Models:
+        RedeemRequestModel:
+          type: object
+          user:
+            type: string
+          amount:
+            type: string
+          key:
+            type: string
+          merchant_description:
+            type: string
+          user_description:
+            type: string
+  MyPreSignUpUserConfirmationLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src/issuer/pre-signup/user
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Layers:
+        - !Ref QLDBHelperLayer
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref IdempotencyTable
+        - AWSLambdaBasicExecutionRole
+        - AmazonQLDBFullAccess
+        - Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - qldb:SendCommand
+              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/${AWS::StackName}
+            - Effect: Allow
+              Action:
+                - qldb:PartiQLSelect
+              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/${AWS::StackName}
+  MyPreSignUpMerchantConfirmationLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./src/issuer/pre-signup/merchant
+      Handler: app.lambda_handler
+      Runtime: python3.9
+      Layers:
+        - !Ref QLDBHelperLayer
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref IdempotencyTable
+        - AmazonQLDBFullAccess
+        - AWSLambdaBasicExecutionRole
+        - Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action:
+                - qldb:SendCommand
+              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/${AWS::StackName}
+            - Effect: Allow
+              Action:
+                - qldb:PartiQLSelect
+              Resource: !Sub arn:aws:qldb:${AWS::Region}:${AWS::AccountId}:ledger/${AWS::StackName}
+  QLDBHelperLayer:
+    Type: AWS::Serverless::LayerVersion
+    LayerName: 'RewardsDAOLayer'
+    CompatibleRuntimes:
+      - python3.9
+    Properties:
+      ContentUri: ./src/rewards_dao
+      CompatibleRuntimes:
+        - python3.9
+    Metadata:
+      BuildMethod: python3.9
+Outputs:
+  RewardsUserApi:
+    Description: "API Gateway - endpoint URL for Prod stage for Rewards functions"
+    Value: !Sub "https://${UserApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/rewards/user/"
+  RewardsMerchantApi:
+    Description: "API Gateway endpoint URL for Prod stage for Rewards functions"
+    Value: !Sub "https://${MerchantApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/rewards/merchant/"
+  BalanceFunction:
+    Description: "Balance Lambda Function ARN"
+    Value: !GetAtt BalanceFunction.Arn
+
