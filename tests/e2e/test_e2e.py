@@ -27,8 +27,8 @@ class API(Enum):
 @pytest.mark.asyncio
 async def test_integration():
     # create a merchant
-    merchant_pool_id = "us-east-1_2GdINgnSJ"  # merchant pool
-    merchant_client_id = "4mn3rkpjkn0qgqqgpj11tjdtgd"
+    merchant_pool_id = "us-east-1_LgGUil0bD"  # merchant pool
+    merchant_client_id = "7md114lcpm43s4crfsk1bijerd"
     merchant = CognitoUser(
         user_pool_id=merchant_pool_id, client_id=merchant_client_id, email=generate_test_email(), password="password123"
     )
@@ -36,8 +36,8 @@ async def test_integration():
     assert (merchant.is_logged_in() is True)
 
     # create a user
-    user_pool_id = "us-east-1_1KWE8lEIA"  # user pool
-    user_client_id = "3d2h5fs9unkhnpdk8vkc5q9p90"
+    user_pool_id = "us-east-1_Q6Eel1Ej0"  # user pool
+    user_client_id = "609pri7eag1s3eekcn78679h2r"
     user = CognitoUser(
         user_pool_id=user_pool_id, client_id=user_client_id, email=generate_test_email(), password="password123"
     )
