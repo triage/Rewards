@@ -36,7 +36,9 @@ class GetBalanceError(QLDBError):
 
 class RewardsDAO:
 
-    def __init__(self, driver: QldbDriver):
+    executor: any
+
+    def __init__(self, driver: Driver):
         self.driver = driver
         if driver is None:
             self.driver = QldbDriver(

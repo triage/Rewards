@@ -1,3 +1,4 @@
+import os
 from enum import Enum
 import uuid
 import pytest
@@ -28,18 +29,24 @@ class API(Enum):
 async def test_integration():
     # create a merchant
     merchant_pool_id = "us-east-1_LgGUil0bD"  # merchant pool
-    merchant_client_id = "7md114lcpm43s4crfsk1bijerd"
+    merchant_client_id = "4jgo02f3r34cnl1m4etffqrrji"
     merchant = CognitoUser(
-        user_pool_id=merchant_pool_id, client_id=merchant_client_id, email=generate_test_email(), password="password123"
+        client_secret=os.environ.get("MERCHANT_CLIENT_SECRET"),
+        client_id=merchant_client_id,
+        email=generate_test_email(),
+        password="password123"
     )
     await merchant.create_user_and_login()
     assert (merchant.is_logged_in() is True)
 
     # create a user
     user_pool_id = "us-east-1_Q6Eel1Ej0"  # user pool
-    user_client_id = "609pri7eag1s3eekcn78679h2r"
+    user_client_id = "1qc1ib7rprdhdb794m42ee26ab"
     user = CognitoUser(
-        user_pool_id=user_pool_id, client_id=user_client_id, email=generate_test_email(), password="password123"
+        client_secret=os.environ.get("USER_CLIENT_SECRET"),
+        client_id=user_client_id,
+        email=generate_test_email(),
+        password="password123"
     )
     await user.create_user_and_login()
     assert user.is_logged_in() is True

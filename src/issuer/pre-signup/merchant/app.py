@@ -18,12 +18,6 @@ def signup_confirmation(event: dict, context: LambdaContext, qldb_driver: Driver
     user_sub = event.get("userName")
 
     def execute_signup_confirmation(dao: RewardsDAO):
-        # initialize the user
-        balance = dao.get_balance(sub=user_sub)
-
-        if balance is not None:
-            raise Exception("User already exists")
-
         dao.insert_balance(sub=user_sub, key=f"user-initialize-{user_sub}")
 
     # Query the table

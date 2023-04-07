@@ -1,31 +1,35 @@
+import base64
+
 import boto3
+import hmac
+import hashlib
 
 
 class CognitoUser:
 
-    def __init__(self, user_pool_id: str, client_id: str, email: str, password: str):
-        self.user_pool_id = user_pool_id
+    def __init__(self, client_id: str, client_secret: str, email: str, password: str):
         self.client_id = client_id
         self.email = email
         self.password = password
         self.authentication_headers: dict
         self.sub: str
+        self.client_secret = client_secret
 
     def is_logged_in(self) -> bool:
         return self.authentication_headers is not None
 
     async def create_user_and_login(self) -> dict:
         user = await self.__create_user()
-        await self.__update_password()
         client = await self.__login()
         return {"user": user, "client": client}
 
     async def __create_user(self):
         client = boto3.client('cognito-idp', region_name='us-east-1')
-        response = client.admin_create_user(
-            UserPoolId=self.user_pool_id,
+        response = client.sign_up(
+            ClientId=self.client_id,
+            SecretHash=self.__calculate_secret_hash(),
             Username=self.email,
-            TemporaryPassword="temporary_password",
+            Password="temporary_password",
             UserAttributes=[
                 {
                     'Name': 'email',
@@ -35,6 +39,11 @@ class CognitoUser:
         )
         self.sub = response['User']['Username']
         return response
+
+    def __calculate_secret_hash(self):
+        key = bytes(self.client_secret, 'utf-8')
+        message = bytes(f'{self.email}{self.client_id}', 'utf-8')
+        return base64.b64encode(hmac.new(key, message, digestmod=hashlib.sha256).digest()).decode()
 
     async def __login(self):
         client = boto3.client('cognito-idp', region_name='us-east-1')
@@ -49,12 +58,3 @@ class CognitoUser:
         token = response['AuthenticationResult']['IdToken']
         headers = {'Authorization': f'Bearer {token}'}
         self.authentication_headers = headers
-
-    async def __update_password(self):
-        client = boto3.client('cognito-idp', region_name='us-east-1')
-        client.admin_set_user_password(
-            UserPoolId=self.user_pool_id,
-            Username=self.email,
-            Password=self.password,
-            Permanent=True  # set to False if the user is required to change their password on next login
-        )
