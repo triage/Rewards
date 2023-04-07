@@ -40,9 +40,9 @@ class CognitoUser:
         self.sub = response['User']['Username']
         return response
 
-    def __calculate_secret_hash(self):
+    def __calculate_secret_hash(self) -> str:
         key = bytes(self.client_secret, 'utf-8')
-        message = bytes(f'{self.email}{self.client_id}', 'utf-8')
+        message = bytes(f'{self.email}{self.client_id}', encoding='utf-8')
         return base64.b64encode(hmac.new(key, message, digestmod=hashlib.sha256).digest()).decode()
 
     async def __login(self):
