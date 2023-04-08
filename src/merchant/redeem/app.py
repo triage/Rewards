@@ -41,7 +41,7 @@ def redeem(event: dict, context: LambdaContext, qldb_driver: Driver = None):
         if not transaction_should_approve(balance=user_balance, transaction_amount=amount):
             raise RedeemError("Insufficient balance")
 
-        #user - update balance
+        # user - update balance
         user_balance -= amount
         dao.update_balance(sub=user_sub, key=key, balance=user_balance)
 
