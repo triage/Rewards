@@ -1,0 +1,22 @@
+{
+  "version": "1",
+  "region": "us-east-1",
+  "userPoolId": "us-east-1_ABCDEFGHI",
+  "userName": "johndoe",
+  "callerContext": {
+    "awsSdkVersion": "aws-sdk-java-console",
+    "clientId": "client-abcdefgh12345678"
+  },
+  "triggerSource": "PostConfirmation_ConfirmSignUp",
+  "request": {
+    "userAttributes": {
+      "sub": "c5de5a32-3b08-4db1-8a77-5b1e9244f4a8",
+      "email_verified": "false",
+      "cognito:user_status": "CONFIRMED",
+      "email": "johndoe@example.com",
+      "given_name": "Seymour",
+      "family_name": "Butts"
+    }
+  },
+  "response": {}
+}

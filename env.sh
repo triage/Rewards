@@ -1,0 +1,4 @@
+export USER_POOL_ID=us-east-1_0BSqTRJSD
+export COGNITO_CLIENT_ID=5uk5ldn008si6s84bvm0r880nb
+export USER_POOL_ID=us-east-1_aqAZ9nZZS
+export COGNITO_CLIENT_ID=2k5cuimje9655u7c409tm89qn8
