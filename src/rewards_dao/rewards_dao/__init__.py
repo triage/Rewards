@@ -52,7 +52,8 @@ class RewardsDAO:
 
     def get_transaction(self, key: str) -> Optional[dict]:
         try:
-            cursor = self.executor.execute_statement("SELECT * FROM transactions WHERE key = ?", key)
+            cursor = self.executor.execute_statement("SELECT * FROM transactions WHERE \"key\" = ?", key)
+
             first_record = next(cursor, None)
             if first_record:
                 return first_record
