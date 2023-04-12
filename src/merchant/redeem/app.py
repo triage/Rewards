@@ -38,6 +38,9 @@ def redeem(event: dict, context: LambdaContext, qldb_driver: Driver = None):
     def execute_transaction(dao: RewardsDAO):
         user_balance = dao.get_balance(sub=user_sub)
 
+        if dao.get_transaction(key=key):
+            raise RedeemError("Transaction already exists")
+
         if not transaction_should_approve(balance=user_balance, transaction_amount=amount):
             raise RedeemError("Insufficient balance")
 

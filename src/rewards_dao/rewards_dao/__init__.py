@@ -1,5 +1,5 @@
 import os
-from typing import Protocol
+from typing import Protocol, Optional, Any
 
 from pyqldb.config.retry_config import RetryConfig
 from pyqldb.cursor.stream_cursor import StreamCursor
@@ -49,6 +49,17 @@ class RewardsDAO:
             self.executor = executor
             return lambda_func(self)
         return self.driver.execute_lambda(lambda executor: block(executor=executor))
+
+    def get_transaction(self, key: str) -> Optional[dict]:
+        try:
+            cursor = self.executor.execute_statement("SELECT * FROM transactions WHERE key = ?", key)
+            first_record = next(cursor, None)
+            if first_record:
+                return first_record
+            else:
+                return None
+        except Exception as e:
+            raise e
 
     def get_balance(self, sub: str) -> int:
         try:
